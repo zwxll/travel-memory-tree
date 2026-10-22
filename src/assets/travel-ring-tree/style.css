@@ -83,21 +83,21 @@ h2 { margin: 0; font: 400 20px/1.5 var(--serif); letter-spacing: .04em; }
 #route-year { margin: 0; color: var(--ink); font: 400 25px/1.4 var(--serif); letter-spacing: .04em; }
 #route-summary { margin: 5px 0 0; color: var(--muted); font-size: 11px; }
 #route-list { max-height: 320px; overflow-y: auto; margin: 0; padding: 2px 2px 2px 0; list-style: none; scrollbar-width: thin; scrollbar-color: #c6a0ac transparent; }
-#route-list li { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 4px; padding: 0 0 12px 20px; }
-.route-open-story { margin-top: 9px; min-height: 28px; padding: 5px 8px; font-size: 10px; }
+#route-list li { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 4px; padding: 0 0 12px 20px; }
+.route-open-story { justify-self: start; margin: 0 0 0 10px; min-height: 28px; padding: 5px 8px; font-size: 11px; }
 #route-list li::before { content: ""; position: absolute; top: 24px; bottom: -20px; left: 5px; width: 1px; background: var(--line); }
 #route-list li:last-child::before { display: none; }
 #route-list li::after { content: ""; position: absolute; top: 18px; left: 2px; width: 7px; height: 7px; border: 1px solid #c995a7; border-radius: 50%; background: var(--surface); }
 #route-list li:has([aria-pressed="true"])::after { border-color: var(--accent); background: var(--accent); }
-.route-stop { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 9px; width: 100%; min-height: 76px; padding: 9px 10px; border: 1px solid transparent; border-radius: 8px; background: transparent; text-align: left; white-space: normal; }
+.route-stop { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; width: 100%; min-width: 0; min-height: 76px; padding: 9px 10px; border: 1px solid transparent; border-radius: 8px; background: transparent; text-align: left; white-space: normal; }
 .route-stop:hover { border-color: transparent; background: transparent; }
 .route-stop:focus-visible { outline-offset: -2px; }
 .route-stop[aria-pressed="true"] { border-color: transparent; background: transparent; color: var(--ink); }
-.route-name { min-width: 0; font: 400 14px/1.5 var(--serif); overflow-wrap: anywhere; }
+.route-name { min-width: 0; font: 400 14px/1.6 var(--serif); overflow-wrap: anywhere; }
 .route-stop[aria-pressed="true"] .route-name { color: var(--accent); }
-.route-date { padding-top: 2px; color: var(--muted); font-size: 11px; white-space: nowrap; }
-.route-meta { grid-column: 1 / -1; color: var(--muted); font-size: 10px; }
-.route-story { grid-column: 1 / -1; overflow: hidden; color: var(--accent); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.route-date { color: var(--muted); font-size: 11px; line-height: 1.6; font-variant-numeric: tabular-nums; white-space: normal; overflow-wrap: anywhere; }
+.route-meta { grid-column: 1 / -1; color: var(--muted); font-size: 11px; line-height: 1.6; }
+.route-story { grid-column: 1 / -1; overflow: hidden; color: var(--accent); font-size: 11px; line-height: 1.6; text-overflow: ellipsis; white-space: nowrap; }
 #cities.story-active #route-list { max-height: 200px; }
 @media (min-width: 761px) {
   #cities.route-active:not(.story-active) #route-list { max-height: max(160px, calc(100dvh - 560px)); }

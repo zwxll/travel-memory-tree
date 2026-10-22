@@ -77,6 +77,7 @@ node tools/mode-browser-test.cjs "Playwright 模块路径"
 node tools/album-browser-test.cjs "Playwright 模块路径"
 node tools/public-checkout-test.cjs "Playwright 模块路径"
 node tools/site-browser-test.cjs "Playwright 模块路径"
+node tools/route-layout-browser-test.cjs "Playwright 模块路径"
 ```
 
 场景类浏览器测试需要本地已有照片；`album-browser-test.cjs` 使用临时合成资料；`public-checkout-test.cjs` 只从 Git 文件创建临时副本，验证空白初始化、可重复构建与照片导入入口。测试生成的图片、报告和临时文件不会提交。
