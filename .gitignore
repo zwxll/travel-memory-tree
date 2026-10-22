@@ -1,0 +1,35 @@
+# Private photos, itineraries, letters and browser exports stay local.
+/photos/
+/data/*
+!/data/photos.example.js
+!/data/user-records.example.js
+!/data/README.md
+/docs/*
+!/docs/THREE-LICENSE.txt
+!/docs/THIRD_PARTY_NOTICES.md
+
+# Local integration tests contain personal travel fixtures.
+/tools/year-story-browser-test.cjs
+/tools/love-browser-test.cjs
+
+# Dependencies, duplicate build output and temporary files.
+node_modules/
+/tools/.build-deps/
+/src/assets/travel-ring-tree/embedded.js
+/.local/
+/test-results/
+/playwright-report/
+*.log
+*.zip
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.heic
+*.mp4
+*.mov
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db

@@ -1,0 +1,15 @@
+{
+  "name": "travel-memory-tree",
+  "version": "1.0.0",
+  "private": true,
+  "description": "An offline Three.js photo tree with editable letters.",
+  "scripts": {
+    "setup": "node tools/setup-local-data.cjs",
+    "build": "node src/assets/travel-ring-tree/build-embedded.cjs",
+    "test": "node tools/test.cjs",
+    "check:public": "node tools/check-public-files.cjs"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  }
+}

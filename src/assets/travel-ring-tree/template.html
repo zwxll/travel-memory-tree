@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>心动回忆</title>
+<script type="importmap">{"imports":{"three":"../umbrella-canopy/vendor/three.module.min.js"}}</script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="scene" aria-label="可拖动旋转和缩放的树下悬挂爱心相册"></canvas>
+<header>
+  <h1>心动回忆</h1>
+  <p>把每一次心动，收藏成我们的故事</p>
+  <span id="summary"></span>
+</header>
+<section id="loading" aria-label="我们的爱情之树相册开场">
+  <div class="opening-brand">♡ &nbsp; 写给我们的每一天 <span>A LITTLE ALBUM FOR TWO</span></div>
+  <button id="loading-skip" type="button">跳过开场 ↗</button>
+  <div class="opening-content">
+    <p class="love-eyebrow">EVERY LITTLE MOMENT, FOREVER WITH YOU</p>
+    <h2>我们的爱情之树相册</h2>
+    <p class="opening-subtitle">把每一次心动种成一圈一圈的年轮。</p>
+    <div class="opening-art" aria-hidden="true">
+      <svg viewBox="0 0 500 340"><defs><linearGradient id="love-canopy" x2="1" y2="1"><stop stop-color="#edb3bf"/><stop offset="1" stop-color="#ca8098"/></linearGradient></defs><ellipse cx="250" cy="305" rx="142" ry="14" fill="#d9bf9b" opacity=".22"/><path d="M231 295 Q244 244 235 159 L263 159 Q252 244 269 295Z" fill="#bf9572"/><path d="M249 180 C80 99 132 4 204 45 Q240 54 250 89 Q267 45 303 43 C392 28 411 139 249 211" fill="url(#love-canopy)"/><path d="M249 267 Q240 198 188 155 M250 238 Q264 193 310 153" fill="none" stroke="#a17d62" stroke-width="5" stroke-linecap="round"/><ellipse cx="250" cy="161" rx="205" ry="72" fill="none" stroke="#d9b97b" stroke-width="2" transform="rotate(-17 250 161)"/><path d="M65 230l4-9 4 9 9 4-9 4-4 9-4-9-9-4Z M421 78l3-7 3 7 7 3-7 3-3 7-3-7-7-3Z" fill="#d9b97b"/><path d="M109 132c-16-20-31 5 0 20 31-15 16-40 0-20 M398 220c-16-20-31 5 0 20 31-15 16-40 0-20" fill="#d497ab"/></svg>
+      <div class="opening-polaroid"><img id="opening-photo" alt=""><span>和你，一起收藏</span></div>
+      <span class="opening-heart">♡</span>
+    </div>
+    <p class="opening-vow">愿每一片风景里，都有你。</p>
+    <p class="love-eyebrow">OUR LOVE GROWS HERE</p>
+    <progress id="opening-progress" max="1" value="0" aria-label="照片加载进度"></progress>
+    <p id="loading-progress" role="status">正在展开我们的回忆…</p>
+  </div>
+  <p class="opening-footer">我 &amp; 你 &nbsp; —— &nbsp; 故事还在继续</p>
+</section>
+<div id="fallback" hidden><p>当前设备无法显示立体相册，仍可按城市和年份翻看回忆。</p></div>
+<div id="scene-controls">
+<nav id="rotation-controls" aria-label="照片布局与旋转控制">
+  <button id="heart-gather" type="button">重聚爱心</button>
+  <button id="rotation-toggle" type="button" aria-pressed="false">开始旋转</button>
+  <button id="rotation-speed" type="button" aria-label="当前旋转速度1倍，点击切换为2倍">转速：1倍</button>
+</nav>
+<nav id="view-controls" class="city-actions" aria-label="视角与城市浏览"><button id="whole-view" type="button">重置视角</button><button id="city-layout" type="button" aria-pressed="false">按城市浏览</button></nav>
+<nav id="atmosphere-controls" aria-label="日夜氛围与动态特效">
+  <button id="night-toggle" type="button" aria-pressed="false">夜晚模式</button>
+  <button id="effects-toggle" type="button" aria-pressed="true">动态特效：已开启</button>
+  <p id="atmosphere-status" hidden>少量花瓣 · 叶片微风 · 柔和日光</p>
+</nav>
+</div>
+<aside id="cities" aria-label="按城市翻看回忆">
+  <div class="city-heading"><h2>心动足迹</h2><button id="city-toggle" type="button" aria-expanded="false" aria-controls="city-nav">显示城市</button></div>
+  <section id="year-route" hidden aria-labelledby="route-year">
+    <div class="route-heading"><h3 id="route-year"></h3><p id="route-summary"></p></div>
+    <ol id="route-list"></ol>
+  </section>
+  <div id="city-nav" aria-label="选择城市" hidden></div>
+  <p id="city-status" role="status"></p>
+  <div id="city-photos"></div>
+  <section id="city-story" hidden aria-labelledby="story-heading">
+    <h3 id="story-heading">这座城市的故事</h3>
+    <p id="story-context"></p>
+    <button id="city-story-toggle" type="button" aria-haspopup="dialog" aria-controls="city-memory">展开城市故事</button>
+    <label for="story-title">故事标题</label>
+    <input id="story-title" type="text" maxlength="100" placeholder="给这段回忆起个名字">
+    <label for="story-body">我们的故事</label>
+    <textarea id="story-body" rows="5" maxlength="12000" placeholder="写下这座城市里，你想留住的故事…"></textarea>
+    <button id="story-save" type="button">保存故事</button>
+    <p id="story-save-status" role="status" aria-live="polite">保存在当前浏览器</p>
+  </section>
+</aside>
+<div id="memory-add-controls">
+  <button id="add-city" type="button">＋ 添加城市</button>
+  <button id="add-envelope" type="button" aria-haspopup="dialog" aria-controls="envelope-editor">＋ 添加信封</button>
+</div>
+<p id="envelope-save-status" class="sr-only" role="status" aria-live="polite"></p>
+<p class="scene-hint">拖动旋转 · 滚轮缩放 · 点击照片，重温心动</p>
+<nav id="years" aria-label="选择照片年份"></nav>
+<aside id="photo-dialog" role="dialog" aria-modal="false" aria-labelledby="photo-title" hidden>
+  <button id="photo-close" type="button" aria-label="关闭照片面板">×</button>
+  <img id="original-photo" alt="">
+  <p id="photo-error" role="status" hidden>这张照片暂时无法显示，请返回或切换其他照片。</p>
+  <div class="photo-caption"><span id="photo-city"></span><span id="photo-count"></span></div>
+  <div class="photo-heading"><h2 id="photo-title"></h2><button id="photo-city-story" type="button" aria-haspopup="dialog" aria-controls="city-memory">展开城市故事</button></div>
+  <p id="photo-date"></p>
+  <div class="photo-actions"><button id="photo-prev" type="button">← 上一张</button><button id="photo-next" type="button">下一张 →</button></div>
+  <div id="photo-strip" aria-label="同城市照片"></div>
+  <p class="photo-keys">方向键切换照片 · Esc 关闭</p>
+</aside>
+<dialog id="city-memory" class="love-dialog letter-paper" aria-labelledby="city-memory-heading">
+  <button id="city-memory-close" class="love-close" type="button" aria-label="关闭城市故事">×</button>
+  <div class="city-memory-content">
+  <p class="love-eyebrow">A LITTLE STORY OF US</p>
+  <h2 id="city-memory-heading"></h2><p id="city-memory-context"></p>
+  <h3 id="city-memory-title"></h3><p id="city-memory-body"></p>
+  <section id="city-memory-gallery" aria-label="翻看城市照片">
+    <div class="memory-album-heading"><h4>这座城市里的我们</h4><span aria-hidden="true">OUR LITTLE MOMENTS</span></div>
+    <div class="memory-album-page">
+      <figure class="memory-print">
+        <img id="city-memory-image" alt="" draggable="false">
+        <figcaption><span id="city-memory-date"></span><span class="memory-print-heart" aria-hidden="true">♡</span><span>和你，把平凡收藏。</span></figcaption>
+      </figure>
+      <p class="memory-album-note">风景会走远，和你的这一刻会留下。</p>
+    </div>
+    <div class="memory-pagination"><button id="city-memory-prev" type="button">← 上一张</button><span id="city-memory-count" aria-live="polite"></span><button id="city-memory-next" type="button">下一张 →</button></div>
+    <div id="city-memory-thumbs" aria-label="选择城市照片"></div>
+    <p class="love-help memory-album-help">轻轻翻过，每一张都是我们。<span>方向键或左右滑动，继续翻看</span></p>
+  </section>
+  <p id="city-memory-empty" class="love-help" hidden>这座城市在所选年份还没有单独归档的照片。</p>
+  </div>
+</dialog>
+<dialog id="album-editor" class="love-dialog" aria-labelledby="album-heading">
+  <button class="love-close" data-close type="button" aria-label="关闭添加城市">×</button>
+  <p class="love-eyebrow">NEW PLACES, MORE OF US</p>
+  <h2 id="album-heading">把我们的下一站，慢慢收好。</h2>
+  <p class="love-intro">添一座城市，留几张照片，也留住那些只有我们懂的小事。</p>
+  <section class="together-setting" aria-labelledby="together-heading">
+    <div><h3 id="together-heading">我们的故事，从这一天开始</h3><p id="together-summary"></p></div>
+    <label>在一起的日期<input id="together-date" type="date"></label>
+  </section>
+  <section class="memory-form" aria-label="添加城市与照片">
+    <div class="memory-fields"><label>心动的城市<input id="memory-city" type="text" list="city-options" maxlength="60" required placeholder="例如：杭州市"></label><datalist id="city-options"></datalist><label>这次回忆的日期<input id="memory-date" type="date" required></label></div>
+    <label>给这段故事起个名字<input id="memory-title" type="text" maxlength="100" placeholder="例如：和你一起吹过的晚风"></label>
+    <label>这一站，我们的故事<textarea id="memory-story" rows="3" maxlength="12000" placeholder="那天的风景、说过的话、想留住的心动…"></textarea></label>
+    <label class="memory-upload">＋ 选择照片，挂到我们的树上<input id="memory-files" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" multiple></label>
+    <p class="love-help">原图会按 年份 / 城市 收入 photos 文件夹。可为每张照片单独设置日期；不选照片时仅保存相册设置。</p>
+    <div id="upload-previews"></div>
+  </section>
+  <div class="album-save-area"><p class="love-help">保存时请选择当前爱情相册文件夹（含 index.html）。日期、年度情书、城市故事和树上来信会一起保存，原有照片保持不变。</p><div class="love-actions"><div class="folder-save-control"><button id="memory-save" type="button" class="love-primary" aria-describedby="folder-save-help">♡ 保存到相册文件夹</button><p id="folder-save-help">请选择整个项目文件夹<br><span>包含 index.html 的那一层</span></p></div><button id="memory-export" type="button">下载新增资料包</button><button id="memory-reload" type="button" hidden>刷新，查看新回忆</button></div><p id="album-status" role="status" aria-live="polite"></p></div>
+</dialog>
+<dialog id="year-letter" class="love-dialog letter-paper" aria-labelledby="letter-heading">
+  <button class="love-close" data-close type="button" aria-label="关闭年度情书">×</button>
+  <div class="year-letter-content">
+  <p class="love-eyebrow">ONE MORE YEAR, A LIFETIME TO GO</p>
+  <p id="letter-year"></p><p id="letter-chapter"></p>
+  <h2 id="letter-heading" class="sr-only">这一年的爱情故事</h2>
+  <label class="sr-only" for="letter-title">年度故事标题</label><input id="letter-title" class="letter-title" type="text" maxlength="100">
+  <p class="letter-salutation">亲爱的你：</p>
+  <label class="sr-only" for="letter-body">这一年的故事正文</label><textarea id="letter-body" rows="8" maxlength="20000" placeholder="这一年，最想留住的心动是什么？&#10;&#10;写写我们一起走过的城市，平凡日子里的小幸福，或是想对你说、却还没说出口的话。&#10;&#10;下一年，还想和你一起……"></textarea>
+  <label class="letter-signoff">—— <input id="letter-signature" type="text" maxlength="80" aria-label="情书落款"></label>
+  <div class="letter-footer"><span class="love-eyebrow">TO OUR NEXT CHAPTER</span><div class="love-actions"><button id="letter-save" type="button">保存这一年的故事</button><button id="letter-enter" class="love-primary" type="button">去看这一年的回忆 ↗</button></div></div>
+  <p id="letter-status" role="status" aria-live="polite"></p>
+  </div>
+</dialog>
+<dialog id="envelope-editor" class="love-dialog" aria-labelledby="envelope-editor-heading">
+  <button id="envelope-editor-close" class="love-close" type="button" aria-label="关闭写信窗口">×</button>
+  <div class="envelope-scroll">
+    <p class="love-eyebrow">A LITTLE LETTER, JUST FOR YOU</p>
+    <h2 id="envelope-editor-heading">把没说完的喜欢，写成一封信。</h2>
+    <p class="love-intro">一段故事，一句情话。封好后，挂在我们的树下。</p>
+    <form id="envelope-form">
+      <label>这封信的名字<input id="envelope-title" maxlength="100" required placeholder="例如：想和你慢慢变老"></label>
+      <div class="memory-fields"><label>写给谁<input id="envelope-recipient" maxlength="80" value="亲爱的你"></label><label>写信的日期<input id="envelope-date" type="date" required></label></div>
+      <label>想对你说的话<textarea id="envelope-body" rows="8" maxlength="12000" required placeholder="记下某个舍不得忘记的瞬间，或是一直想说给你听的话……"></textarea></label>
+      <label>落款<input id="envelope-signature" maxlength="80" value="一直喜欢你的我"></label>
+      <p class="love-help">挂到树上会保存在当前浏览器；保存到项目文件夹后，信封可随相册一起带走。</p>
+      <div class="love-actions"><button id="envelope-hang" class="love-primary" type="submit">♡ 挂到树上</button><button id="envelope-save-project" type="button">保存到项目文件夹</button></div>
+    </form>
+    <details class="envelope-library"><summary id="envelope-list-title">树上的情书</summary><p id="envelope-list-empty" class="love-help">第一封来信，等你写下。</p><div id="envelope-list"></div></details>
+  </div>
+</dialog>
+<dialog id="envelope-reader" class="love-dialog" aria-labelledby="envelope-reader-heading">
+  <button id="envelope-reader-close" class="love-close" type="button" aria-label="关闭情书">×</button>
+  <div class="envelope-scroll">
+    <div class="envelope-reader-head"><p class="love-eyebrow">SEALED WITH LOVE</p><h2 id="envelope-reader-heading"></h2></div>
+    <div id="envelope-stage-wrap">
+      <canvas id="envelope-stage" aria-hidden="true"></canvas>
+      <p id="envelope-open-status" role="status"></p>
+      <div class="love-actions"><button id="envelope-skip" type="button">直接读信 ↗</button></div>
+    </div>
+    <article id="envelope-page" tabindex="-1" hidden>
+      <p id="envelope-read-recipient"></p><div id="envelope-read-body"></div>
+      <footer><p id="envelope-read-signature"></p><time id="envelope-read-date"></time></footer>
+      <p class="envelope-paper-end" aria-hidden="true">♡</p>
+      <div class="love-actions"><button id="envelope-edit" type="button">编辑这封信</button></div>
+    </article>
+  </div>
+</dialog>
+<script type="module" src="main.js"></script>
+</body>
+</html>
