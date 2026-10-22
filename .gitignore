@@ -37,10 +37,12 @@ node_modules/
 .DS_Store
 Thumbs.db
 
-# Only these six screenshots were explicitly selected for the public README.
+# Only these screenshots were explicitly selected for the public README.
 !/docs/previews/carousel-night.png
 !/docs/previews/city-editor.png
 !/docs/previews/envelope-editor.png
 !/docs/previews/envelope-animation.png
 !/docs/previews/letter-reader.png
 !/docs/previews/heart-layout.png
+!/docs/previews/year-route.png
+!/docs/previews/city-story.png

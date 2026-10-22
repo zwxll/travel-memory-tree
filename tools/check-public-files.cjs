@@ -7,7 +7,8 @@ const publicData = new Set(['data/README.md', 'data/photos.example.js', 'data/us
 const approvedScreenshots = new Set([
   'docs/previews/carousel-night.png', 'docs/previews/city-editor.png',
   'docs/previews/envelope-editor.png', 'docs/previews/envelope-animation.png',
-  'docs/previews/letter-reader.png', 'docs/previews/heart-layout.png'
+  'docs/previews/letter-reader.png', 'docs/previews/heart-layout.png',
+  'docs/previews/year-route.png', 'docs/previews/city-story.png'
 ]);
 const publicDocs = new Set(['docs/THREE-LICENSE.txt', 'docs/THIRD_PARTY_NOTICES.md', ...approvedScreenshots]);
 const localTests = new Set(['tools/year-story-browser-test.cjs', 'tools/love-browser-test.cjs']);

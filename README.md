@@ -6,7 +6,7 @@
 
 在线版使用 72 张程序生成的示例卡片，可体验照片布局、城市高亮与信封编辑。没有预置真实照片、旅行记录或私人信件，编辑内容保存在访问者自己的浏览器中。
 
-公开仓库提供代码、空白数据模板、使用说明和下方明确选用的六张界面截图。原始照片库、旅行资料、纪念日期与信件的数据文件、浏览器导出资料均保留在本地。
+公开仓库提供代码、空白数据模板、使用说明和下方明确选用的八张界面截图。原始照片库、旅行资料、纪念日期与信件的数据文件、浏览器导出资料均保留在本地。
 
 ## 界面预览
 
@@ -26,6 +26,11 @@
 | :---: | :---: |
 | [![树下的信封展开动画与飘动爱心](docs/previews/envelope-animation.png)](docs/previews/envelope-animation.png) | [![奶油色横纹信纸上的完整信件阅读界面](docs/previews/letter-reader.png)](docs/previews/letter-reader.png) |
 | 点击信封播放拆封、抽出与展开信纸的动画，也可直接读信。 | 长信支持滚动阅读，关闭按钮保持固定。 |
+
+| 年份旅行路线 | 城市故事相册 |
+| :---: | :---: |
+| [![按年份查看城市旅行路线与照片树](docs/previews/year-route.png)](docs/previews/year-route.png) | [![厦门城市故事与相册阅读窗口](docs/previews/city-story.png)](docs/previews/city-story.png) |
+| 按年份浏览旅行足迹，查看城市、出行日期与照片数量。 | 展开城市故事，阅读文字并回看这座城市里的照片。 |
 
 ## 使用
 
@@ -66,7 +71,7 @@ npm test
 
 `npm test` 使用合成测试资料，检查相册文件、信封和故事存储、两种照片布局及年份路线，不读取私人照片。
 
-提交或上传前执行 `npm run check:public`，检查 Git 暂存清单中没有私人数据文件、未经指定的图片、压缩备份或凭据；界面预览仅放行上方六张截图。
+提交或上传前执行 `npm run check:public`，检查 Git 暂存清单中没有私人数据文件、未经指定的图片、压缩备份或凭据；界面预览仅放行上方八张截图。
 
 浏览器回归需要自行安装 Playwright 和 Edge；可向测试脚本传入已有 Playwright 模块路径。例如：
 
@@ -100,6 +105,6 @@ node tools/route-layout-browser-test.cjs "Playwright 模块路径"
 | `src/assets/travel-ring-tree/` | 相册源码、样式、模板及构建脚本 |
 | `src/assets/umbrella-canopy/` | 基础场景、花园与本地第三方依赖 |
 | `tools/` | 初始化与验收工具 |
-| `docs/` | 第三方许可说明与六张指定界面预览；其他本地截图与历史报告不提交 |
+| `docs/` | 第三方许可说明与八张指定界面预览；其他本地截图与历史报告不提交 |
 
 第三方来源与许可证见 [docs/THIRD_PARTY_NOTICES.md](docs/THIRD_PARTY_NOTICES.md)。
