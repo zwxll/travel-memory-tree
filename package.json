@@ -6,6 +6,7 @@
   "scripts": {
     "setup": "node tools/setup-local-data.cjs",
     "build": "node src/assets/travel-ring-tree/build-embedded.cjs",
+    "build:site": "node tools/build-site.cjs",
     "test": "node tools/test.cjs",
     "check:public": "node tools/check-public-files.cjs"
   },

@@ -17,6 +17,7 @@ node_modules/
 /tools/.build-deps/
 /src/assets/travel-ring-tree/embedded.js
 /.local/
+/.pages/
 /test-results/
 /playwright-report/
 *.log

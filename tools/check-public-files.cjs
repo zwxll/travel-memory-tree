@@ -9,7 +9,7 @@ const localTests = new Set(['tools/year-story-browser-test.cjs', 'tools/love-bro
 
 assert.ok(files.length, 'Stage the public files before checking the upload.');
 for (const file of files) {
-  assert.ok(!file.startsWith('photos/') && !file.startsWith('.local/'), 'Private directory tracked: ' + file);
+  assert.ok(!file.startsWith('photos/') && !file.startsWith('.local/') && !file.startsWith('.pages/'), 'Private or generated directory tracked: ' + file);
   assert.ok(!file.startsWith('data/') || publicData.has(file), 'Private album data tracked: ' + file);
   assert.ok(!file.startsWith('docs/') || publicDocs.has(file), 'Local report tracked: ' + file);
   assert.ok(!localTests.has(file), 'Private travel fixture tracked: ' + file);

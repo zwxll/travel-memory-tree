@@ -295,7 +295,7 @@ function buildUI() {
   $('story-title').addEventListener('input', saveCurrentStory);
   $('story-body').addEventListener('input', saveCurrentStory);
   $('story-save').addEventListener('click', saveCurrentStory);
-  $('summary').textContent = `${catalog.photos.length} 个瞬间 · ${catalog.cities.length} 座城市的回忆`;
+  $('summary').textContent = window.travelTreeAdditions?.demo === true ? `在线演示 · ${catalog.photos.length} 张示例画面 · 不含私人资料` : `${catalog.photos.length} 个瞬间 · ${catalog.cities.length} 座城市的回忆`;
   const years = [null, ...catalog.years];
   if (catalog.photos.some(p => p.year === '年份未确定')) years.push('年份未确定');
   for (const year of years) {

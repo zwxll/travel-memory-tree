@@ -2,6 +2,10 @@
 
 可离线使用的 Three.js 三维相册。照片悬挂在树冠下，支持旋转木马、立体爱心、城市浏览，以及可编辑的信封和年度情书。
 
+[在线体验](https://zwxll.github.io/travel-memory-tree/)
+
+在线版使用 72 张程序生成的示例卡片，可体验照片布局、城市高亮与信封编辑。没有预置真实照片、旅行记录或私人信件，编辑内容保存在访问者自己的浏览器中。
+
 公开仓库只提供代码、空白数据模板和使用说明。真实照片、旅行路线、纪念日期、信件、截图及浏览器导出资料均不随仓库上传。
 
 ## 使用
@@ -53,9 +57,18 @@ node tools/envelope-browser-test.cjs "Playwright 模块路径"
 node tools/mode-browser-test.cjs "Playwright 模块路径"
 node tools/album-browser-test.cjs "Playwright 模块路径"
 node tools/public-checkout-test.cjs "Playwright 模块路径"
+node tools/site-browser-test.cjs "Playwright 模块路径"
 ```
 
 场景类浏览器测试需要本地已有照片；`album-browser-test.cjs` 使用临时合成资料；`public-checkout-test.cjs` 只从 Git 文件创建临时副本，验证空白初始化、可重复构建与照片导入入口。测试生成的图片、报告和临时文件不会提交。
+
+## 在线部署
+
+推送到 `main` 后，GitHub Actions 会构建并发布 GitHub Pages。首次配置时，在仓库 Settings → Pages 中选择 GitHub Actions 作为发布源。
+
+`npm run build:site` 只将入口、两个运行脚本、程序化示例与空白资料模板写入 `.pages/`。本地 `photos/`、`data/photos.js`、`data/user-records.js` 和旅行清单不参与在线构建。工作流只发布这份独立目录，不上传整个本地项目。
+
+`node tools/site-browser-test.cjs "Playwright 模块路径"` 可检查仓库子路径访问、示例画面、布局与信封编辑，以及是否出现外部服务请求。
 
 ## 目录
 

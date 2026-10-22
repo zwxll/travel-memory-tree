@@ -1,0 +1,15 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const { spawnSync } = require('node:child_process');
+const root = path.resolve(__dirname, '..');
+const site = path.join(root, '.pages');
+const result = spawnSync(process.execPath, [path.join(__dirname, 'build-site.cjs')], { cwd: root, encoding: 'utf8' });
+assert.equal(result.status, 0, 'the online demo build must succeed: ' + result.stderr);
+const walk = directory => fs.readdirSync(directory, { withFileTypes: true }).flatMap(entry => entry.isDirectory() ? walk(path.join(directory, entry.name)) : [path.relative(site, path.join(directory, entry.name)).replace(/\\/g, '/')]);
+assert.deepEqual(walk(site).sort(), ['.nojekyll', 'assets/start.js', 'assets/tree-runtime.js', 'data/photos.js', 'data/user-records.js', 'index.html']);
+assert.equal(fs.readFileSync(path.join(site, 'data/photos.js'), 'utf8'), fs.readFileSync(path.join(root, 'assets/demo-records.js'), 'utf8'), 'the deployment uses generated examples, never local album photos');
+const additions = fs.readFileSync(path.join(site, 'data/user-records.js'), 'utf8');
+assert.ok(additions.startsWith(fs.readFileSync(path.join(root, 'data/user-records.example.js'), 'utf8')), 'the deployment starts with empty public letters and settings');
+assert.ok(additions.includes('window.travelTreeAdditions.demo = true;'));
+console.log('PASS: only six allowlisted deployment files; generated examples and empty settings replace all local private data');

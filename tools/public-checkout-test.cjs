@@ -37,5 +37,5 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || process.argv[2] ||
     assert.equal(await page.locator('#album-editor').evaluate(dialog => dialog.open), true);
     assert.deepEqual(errors, []);
   } finally { await browser.close(); }
-  console.log('PASS: public checkout has no private data; empty setup, non-overwrite, six test groups, reproducible rebuild and offline import all work');
+  console.log('PASS: public checkout has no private data; empty setup, non-overwrite, core tests, reproducible rebuild and offline import all work');
 })().catch(error => { console.error(error); process.exitCode = 1; });
