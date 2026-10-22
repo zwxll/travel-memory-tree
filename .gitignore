@@ -7,6 +7,8 @@
 /docs/*
 !/docs/THREE-LICENSE.txt
 !/docs/THIRD_PARTY_NOTICES.md
+!/docs/previews/
+/docs/previews/*
 
 # Local integration tests contain personal travel fixtures.
 /tools/year-story-browser-test.cjs
@@ -34,3 +36,11 @@ node_modules/
 !.env.example
 .DS_Store
 Thumbs.db
+
+# Only these six screenshots were explicitly selected for the public README.
+!/docs/previews/carousel-night.png
+!/docs/previews/city-editor.png
+!/docs/previews/envelope-editor.png
+!/docs/previews/envelope-animation.png
+!/docs/previews/letter-reader.png
+!/docs/previews/heart-layout.png

@@ -6,7 +6,26 @@
 
 在线版使用 72 张程序生成的示例卡片，可体验照片布局、城市高亮与信封编辑。没有预置真实照片、旅行记录或私人信件，编辑内容保存在访问者自己的浏览器中。
 
-公开仓库只提供代码、空白数据模板和使用说明。真实照片、旅行路线、纪念日期、信件、截图及浏览器导出资料均不随仓库上传。
+公开仓库提供代码、空白数据模板、使用说明和下方明确选用的六张界面截图。原始照片库、旅行资料、纪念日期与信件的数据文件、浏览器导出资料均保留在本地。
+
+## 界面预览
+
+以下为本地版本截图，点击图片可查看大图；在线演示使用程序生成的示例卡片。
+
+| 旋转木马与夜景 | 立体爱心布局 |
+| :---: | :---: |
+| [![夜景中的旋转木马相册与城市木牌](docs/previews/carousel-night.png)](docs/previews/carousel-night.png) | [![照片汇聚成立体爱心，保留树冠与花园](docs/previews/heart-layout.png)](docs/previews/heart-layout.png) |
+| 照片随树旋转，支持城市高亮、日夜切换与动态特效控制。 | 在木马与立体爱心之间切换，也可独立控制旋转。 |
+
+| 添加城市与相册设置 | 写信与信封管理 |
+| :---: | :---: |
+| [![添加城市、照片、故事和相册纪念日期的窗口](docs/previews/city-editor.png)](docs/previews/city-editor.png) | [![填写标题、收件人、日期、正文和落款的写信窗口](docs/previews/envelope-editor.png)](docs/previews/envelope-editor.png) |
+| 记录城市与故事，添加照片，并保存到本地相册文件夹。 | 写下心意并挂到树上；已有信件可重新打开编辑。 |
+
+| 拆信动画 | 信纸阅读 |
+| :---: | :---: |
+| [![树下的信封展开动画与飘动爱心](docs/previews/envelope-animation.png)](docs/previews/envelope-animation.png) | [![奶油色横纹信纸上的完整信件阅读界面](docs/previews/letter-reader.png)](docs/previews/letter-reader.png) |
+| 点击信封播放拆封、抽出与展开信纸的动画，也可直接读信。 | 长信支持滚动阅读，关闭按钮保持固定。 |
 
 ## 使用
 
@@ -47,7 +66,7 @@ npm test
 
 `npm test` 使用合成测试资料，检查相册文件、信封和故事存储、两种照片布局及年份路线，不读取私人照片。
 
-提交或上传前执行 `npm run check:public`，检查 Git 暂存清单中没有私人数据、图片、压缩备份或凭据。
+提交或上传前执行 `npm run check:public`，检查 Git 暂存清单中没有私人数据文件、未经指定的图片、压缩备份或凭据；界面预览仅放行上方六张截图。
 
 浏览器回归需要自行安装 Playwright 和 Edge；可向测试脚本传入已有 Playwright 模块路径。例如：
 
@@ -80,6 +99,6 @@ node tools/site-browser-test.cjs "Playwright 模块路径"
 | `src/assets/travel-ring-tree/` | 相册源码、样式、模板及构建脚本 |
 | `src/assets/umbrella-canopy/` | 基础场景、花园与本地第三方依赖 |
 | `tools/` | 初始化与验收工具 |
-| `docs/` | 第三方许可说明；本地截图与历史报告不提交 |
+| `docs/` | 第三方许可说明与六张指定界面预览；其他本地截图与历史报告不提交 |
 
 第三方来源与许可证见 [docs/THIRD_PARTY_NOTICES.md](docs/THIRD_PARTY_NOTICES.md)。
