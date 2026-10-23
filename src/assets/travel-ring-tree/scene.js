@@ -27,7 +27,6 @@ export class TravelRingTreeScene extends CanopyScene {
         object.frustumCulled = false;
         object.onBeforeRender = (renderer, _scene, camera) => {
           renderer.getDrawingBufferSize(uniforms.skyResolution.value);
-          this.atmosphere?.updateBackground();
           object.position.copy(camera.position); object.updateMatrixWorld(true);
           uniforms.sunDirection.value.copy(this.controls.target).sub(camera.position).normalize();
           uniforms.moonDirection.value.set(.7, .5, .5).unproject(camera).sub(camera.position).normalize();
@@ -56,8 +55,6 @@ export class TravelRingTreeScene extends CanopyScene {
   _buildAtmosphere() { this.atmosphere = new TreeAtmosphere(this); }
 
   setAtmosphere(night, effects) { this.atmosphere.set(night, effects); }
-
-  releaseContext() { this.atmosphere.releaseBackground(); super.releaseContext(); }
 
   setPhotos(photos, cities, years) {
     this.photos = photos; this.stories = cities;

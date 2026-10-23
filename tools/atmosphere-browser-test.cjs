@@ -39,13 +39,13 @@ const entry = pathToFileURL(path.resolve(__dirname, '../index.html')).href;
       const s = travelTree.scene, a = s.atmosphere;
       for (let i = 0; i < 50; i++) s._updateCards(.1);
       const positions = Array.from(a.fireflies.geometry.attributes.position.array); s._updateCards(.1);
-      return { mix: a.mix, colors: s.cards.map(c => c.mat.color.toArray()), positions: s.cards.map(c => c.photo.rest.toArray()), stars: a.stars.visible, flies: a.fireflies.visible, moving: a.fireflies.geometry.attributes.position.array.some((n, i) => n !== positions[i]), starCount: a.stars.geometry.drawRange.count, flyCount: a.fireflies.geometry.drawRange.count, pointLights: s.scene.children.filter(c => c.isPointLight).length, rim: a.rim.intensity, photos: s.cards.length };
+      return { mix: a.mix, colors: s.cards.map(c => c.mat.color.toArray()), positions: s.cards.map(c => c.photo.rest.toArray()), stars: !!a.stars, flies: a.fireflies.visible, moving: a.fireflies.geometry.attributes.position.array.some((n, i) => n !== positions[i]), flyCount: a.fireflies.geometry.drawRange.count, pointLights: s.scene.children.filter(c => c.isPointLight).length, rim: a.rim.intensity, photos: s.cards.length };
     });
     assert.ok(await page.evaluate(day => travelTree.scene.threadHearts.material.emissiveIntensity > day * 4 && travelTree.scene.atmosphere.heartSparkles.count > 0, dayHeart), 'jewel hearts and star highlights become brighter at night');
     assert.equal(night.mix, 1); assert.deepEqual(night.colors, before.colors, 'photo color values must not be tinted by night lighting');
     assert.ok(await page.evaluate(day => travelTree.scene.trunkKeepsakes.getObjectByName('trunk-night-lamps').userData.glassMaterial.emissiveIntensity > day, dayLamp.emission), 'nightlights brighten softly after dark');
     assert.deepEqual(night.positions, before.positions, 'night mode does not rearrange photos');
-    assert.ok(night.stars && night.flies && night.moving); assert.ok(night.starCount <= 72 && night.flyCount <= 42); assert.equal(night.pointLights, 1);
+    assert.ok(!night.stars && night.flies && night.moving); assert.ok(night.flyCount <= 42); assert.equal(night.pointLights, 1);
     const breath = await page.evaluate(() => {
       const s = travelTree.scene, a = s.atmosphere, card = s.cards[0]; s.hovered = card.photo;
       a.enabled = false; a.update(0); const baseline = card.plate.material.emissiveIntensity; a.enabled = true;
@@ -64,9 +64,9 @@ const entry = pathToFileURL(path.resolve(__dirname, '../index.html')).href;
       const s = travelTree.scene, a = s.atmosphere; s.setYear(null); s.flight = null;
       const time = a.effectTime, positions = Array.from(a.fireflies.geometry.attributes.position.array), wind = s.garden.meadow.blades.uniforms.uTime.value;
       for (let i = 0; i < 5; i++) { s.garden.update(s.time + i); s._updateCards(.1); }
-      return { frozen: time === a.effectTime && a.fireflies.geometry.attributes.position.array.every((v, i) => v === positions[i]), windFrozen: s.garden.meadow.blades.uniforms.uTime.value === wind, flies: a.fireflies.visible, petals: a.petals.visible, leaf: a.leafUniforms.motion.value, halo: a.halo.visible, stars: a.stars.visible, night: a.mix };
+      return { frozen: time === a.effectTime && a.fireflies.geometry.attributes.position.array.every((v, i) => v === positions[i]), windFrozen: s.garden.meadow.blades.uniforms.uTime.value === wind, flies: a.fireflies.visible, petals: a.petals.visible, leaf: a.leafUniforms.motion.value, halo: a.halo.visible, stars: !!a.stars, night: a.mix };
     });
-    assert.ok(off.frozen && off.windFrozen && !off.flies && !off.petals && !off.halo); assert.equal(off.leaf, 0); assert.equal(off.night, 1); assert.equal(off.stars, true);
+    assert.ok(off.frozen && off.windFrozen && !off.flies && !off.petals && !off.halo); assert.equal(off.leaf, 0); assert.equal(off.night, 1); assert.equal(off.stars, false);
     await page.locator('#night-toggle').click(); assert.equal(await page.evaluate(() => travelTree.scene.atmosphere.mix), 0);
     await page.locator('#night-toggle').click(); await ready(page);
     assert.equal(await page.locator('#night-toggle').getAttribute('aria-pressed'), 'true');
@@ -75,9 +75,9 @@ const entry = pathToFileURL(path.resolve(__dirname, '../index.html')).href;
     const low = await page.evaluate(() => {
       const s = travelTree.scene, a = s.atmosphere; s.setRunning(false); s.running = true;
       for (let i = 0; i < 50; i++) a.update(.05);
-      s.running = false; return { low: a.lowDensity, flies: a.fireflies.geometry.drawRange.count, stars: a.stars.geometry.drawRange.count };
+      s.running = false; return { low: a.lowDensity, flies: a.fireflies.geometry.drawRange.count };
     });
-    assert.ok(low.low && low.flies <= 16 && low.stars <= 32, 'sustained slow frames automatically reduce density');
+    assert.ok(low.low && low.flies <= 16, 'sustained slow frames automatically reduce density');
     await page.evaluate(() => travelTree.scene.setRunning(true));
     await page.locator('#heart-gather').click();
     await page.waitForFunction(() => !travelTree.scene.heartGather && !travelTree.scene.flight);
@@ -103,6 +103,6 @@ const entry = pathToFileURL(path.resolve(__dirname, '../index.html')).href;
     assert.equal(await mobile.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
     await mobile.close();
     assert.deepEqual(errors, []); assert.deepEqual(network, []);
-    console.log('PASS: day/night fade, sparse continuous fireflies/static stars, unchanged photo colors/layouts, subtle frame breathing/year halo, effects and wind off, saved preferences, adaptive density, viewing/mode switching, live reduced-motion and mobile controls');
+    console.log('PASS: day/night fade, sparse continuous fireflies/no background stars, unchanged photo colors/layouts, subtle frame breathing/year halo, effects and wind off, saved preferences, adaptive density, viewing/mode switching, live reduced-motion and mobile controls');
   } finally { await browser.close(); }
 })().catch(e => { console.error(e); process.exitCode = 1; });

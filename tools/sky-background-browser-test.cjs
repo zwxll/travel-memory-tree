@@ -37,22 +37,11 @@ const root = path.resolve(__dirname, '..');
     await page.locator('#night-toggle').click();
     const night = await page.evaluate(() => {
       const s = travelTree.scene; s.atmosphere.set(true, false); s._updateCards(0); s.renderer.render(s.scene, s.camera);
-      return { colors: s.cards.map(c => c.mat.color.toArray()), positions: s.cards.map(c => c.photo.rest.toArray()), stars: s.atmosphere.stars.geometry.drawRange.count };
+      return { colors: s.cards.map(c => c.mat.color.toArray()), positions: s.cards.map(c => c.photo.rest.toArray()), stars: !!s.scene.getObjectByName('quiet-night-stars') };
     });
     assert.deepEqual(night.colors, before.colors, 'sky must preserve original photo colors');
     assert.deepEqual(night.positions, before.positions, 'sky must preserve photo layout');
-    assert.ok(night.stars <= 72, 'retain sparse stars');
-    const visibleStars = () => page.evaluate(() => {
-      const s = travelTree.scene, stars = s.atmosphere.stars, positions = stars.geometry.attributes.position;
-      let visible = 0;
-      for (let i = 0; i < stars.geometry.drawRange.count; i++) {
-        const point = s.camera.position.clone().fromBufferAttribute(positions, i); stars.localToWorld(point); point.project(s.camera);
-        if (Math.abs(point.x) < .95 && Math.abs(point.y) < .8 && point.z < 1) visible++;
-      }
-      return visible;
-    });
-    const desktopStars = await visibleStars();
-    assert.ok(desktopStars >= 3, 'some sparse stars must fall inside the desktop view: ' + desktopStars);
+    assert.equal(night.stars, false, 'background stars are removed');
     const moonPixels = async () => {
       const png = await page.screenshot();
       return page.evaluate(async source => {
@@ -87,6 +76,6 @@ const root = path.resolve(__dirname, '..');
     await page.locator('#night-toggle').click();
     await page.screenshot({ path: path.join(root, '.local/sky-mobile-day.png') });
     assert.deepEqual(errors, []); assert.deepEqual(network, []);
-    console.log('PASS: single offline sky dome, drifting/stopped clouds, day/night, desktop/mobile crescent, sparse visible stars and unchanged photos', { desktopMoon, mobileMoon, desktopStars });
+    console.log('PASS: single offline sky dome, drifting/stopped clouds, day/night, desktop/mobile crescent, no background stars and unchanged photos', { desktopMoon, mobileMoon });
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

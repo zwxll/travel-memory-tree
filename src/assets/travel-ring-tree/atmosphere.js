@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { GlimmerBackground } from './glimmer-background.js';
 
 // Small independent atmosphere layer. Photos keep their unlit, original-color material.
 export class TreeAtmosphere {
@@ -30,15 +29,6 @@ export class TreeAtmosphere {
     this.glowMap = new THREE.CanvasTexture(canvas); this.glowMap.colorSpace = THREE.SRGBColorSpace;
     let seed = 74123;
     const rand = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
-    const stars = new Float32Array(72 * 3);
-    for (let i = 0; i < 72; i++) {
-      const angle = rand() * Math.PI * 2, y = -.5 + rand() * .85, r = Math.sqrt(1 - y * y) * 104;
-      stars.set([Math.cos(angle) * r, y * 104, Math.sin(angle) * r], i * 3);
-    }
-    this.stars = new THREE.Points(new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(stars, 3)), new THREE.PointsMaterial({ color: '#eee3d1', size: .23, transparent: true, opacity: 0, depthWrite: false, fog: false }));
-    this.stars.name = 'quiet-night-stars'; this.stars.frustumCulled = false;
-    this.stars.onBeforeRender = (_renderer, _scene, camera) => { this.stars.position.copy(camera.position); this.stars.updateMatrixWorld(true); };
-    this.group.add(this.stars);
     this.flyRest = [];
     const flyPositions = new Float32Array(42 * 3);
     for (let i = 0; i < 42; i++) {
@@ -93,7 +83,6 @@ export class TreeAtmosphere {
   }
 
   applyDensity() {
-    this.stars.geometry.setDrawRange(0, this.lowDensity ? 32 : 72);
     this.fireflies.geometry.setDrawRange(0, this.lowDensity ? 16 : 42);
     if (this.heartSparkles) { this.sparkleStride = this.lowDensity ? 6 : 3; this.heartSparkles.count = Math.ceil(this.owner.cards.length / this.sparkleStride); }
     this.petals.children.forEach((petal, i) => { petal.visible = i < (this.lowDensity ? 2 : 6); });
@@ -108,25 +97,6 @@ export class TreeAtmosphere {
   }
 
   pulseYear() { if (this.enabled) this.pulseAge = 0; }
-
-  updateBackground() {
-    if (!this.sky || this.mix <= .005 || this.glimmerUnavailable) return;
-    if (!this.glimmer) {
-      try { this.glimmer = new GlimmerBackground(); }
-      catch (error) { this.glimmerUnavailable = true; console.warn('Night background unavailable; retaining moonlit sky.', error); return; }
-    }
-    this.glimmer.update(this.effectTime, this.owner.width, this.owner.height, this.lowDensity);
-    this.sky.material.uniforms.glimmerMap.value = this.glimmer.texture;
-    const viewAspect = this.owner.width / this.owner.height, fieldAspect = this.glimmer.canvas.width / this.glimmer.canvas.height;
-    this.sky.material.uniforms.glimmerScale.value.set(Math.min(1, viewAspect / fieldAspect), Math.min(1, fieldAspect / viewAspect));
-    this.sky.material.uniforms.glimmerReady.value = 1;
-  }
-
-  releaseBackground() {
-    this.glimmer?.dispose(); this.glimmer = null;
-    this.sky.material.uniforms.glimmerMap.value = null;
-    this.sky.material.uniforms.glimmerReady.value = 0;
-  }
 
   update(dt) {
     const step = Math.min(Math.max(dt, 0), .1), active = this.enabled && !this.owner.reducedMotion;
@@ -144,7 +114,6 @@ export class TreeAtmosphere {
       this.sky.material.uniforms.skyTime.value = t;
       this.sky.material.uniforms.nightMix.value = n;
       this.sky.material.uniforms.motionEnabled.value = active ? 1 : 0;
-      this.updateBackground();
     }
     this.owner.scene.background.lerpColors(this.colors.dayFog, this.colors.nightFog, n);
     this.owner.scene.fog.color.copy(this.owner.scene.background);
@@ -154,7 +123,6 @@ export class TreeAtmosphere {
     for (const { light, day } of this.lights) light.intensity = day * (1 - n * (light.isHemisphereLight ? .57 : .82) + daylight);
     this.rim.intensity = n * .28;
     this.flowerNight.value = n; this.grassBrightness.value = .95 * (1 - .65 * n);
-    this.stars.visible = n > .005; this.stars.material.opacity = n * .6;
     this.fireflies.visible = active && n > .005 && !this.owner.selected; this.fireflies.material.opacity = n * .82;
     const positions = this.fireflies.geometry.attributes.position;
     if (active && n > .005) {
