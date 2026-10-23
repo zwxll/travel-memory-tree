@@ -7,10 +7,10 @@ export function memorySkyMaterial() {
     uniforms: {
       topColor: { value: new THREE.Color('#efd6ce') }, horizonColor: { value: new THREE.Color('#fff1df') },
       cloudColor: { value: new THREE.Color('#fffdf8') }, sunColor: { value: new THREE.Color('#ffe2a7') },
-      moonColor: { value: new THREE.Color('#ffedce') },
-      nightTopColor: { value: new THREE.Color('#182438') }, nightMidColor: { value: new THREE.Color('#344259') },
-      nightHorizonColor: { value: new THREE.Color('#495166') },
-      starDensity: { value: 1 }, milkyWayStrength: { value: .085 },
+      moonColor: { value: new THREE.Color('#eef2ff') },
+      nightTopColor: { value: new THREE.Color('#03091d') }, nightMidColor: { value: new THREE.Color('#081330') },
+      nightHorizonColor: { value: new THREE.Color('#14223f') },
+      starDensity: { value: 1 }, milkyWayStrength: { value: .72 },
       skyTime: { value: 0 }, nightMix: { value: 0 },
       motionEnabled: { value: 0 },
       skyResolution: { value: new THREE.Vector2(1, 1) },
@@ -53,13 +53,13 @@ export function memorySkyMaterial() {
       // Equal-area longitude/height cells: jittered, mostly empty, with many dim stars.
       // The direction belongs to the camera-centred dome, never to a photo or screen pixel.
       vec3 distantStars(vec3 direction, float footprint) {
-        vec2 grid = vec2(384., 192.);
+        vec2 grid = vec2(768., 384.);
         vec2 uv = vec2(atan(direction.z, direction.x) / 6.2831853 + .5, direction.y * .5 + .5);
         vec2 cell = floor(uv * grid);
-        if (skyHash(cell + 13.1) > .048 * starDensity) return vec3(0.);
+        if (skyHash(cell + 13.1) > .22 * starDensity) return vec3(0.);
         vec2 jitter = .15 + .7 * vec2(skyHash(cell + 37.7), skyHash(cell + 91.3));
         // Move only stars inside the band, using the existing star evaluation.
-        float galacticLatitude = dot(direction, normalize(vec3(-.24, .94, .25))) + .05;
+        float galacticLatitude = dot(direction, normalize(vec3(.23, .95, .15))) + .25;
         if (abs(galacticLatitude) < .15 && milkyWayStrength > 0.) {
           float phase = skyHash(cell + 8.2) * 6.2831853;
           jitter += .025 * vec2(sin(skyTime * .009 + phase), cos(skyTime * .006 + phase));
@@ -71,7 +71,7 @@ export function memorySkyMaterial() {
         float distanceToStar = length(direction - starDirection);
         float magnitude = skyHash(cell + 57.9);
         float energy = .091 + pow(magnitude, 5.) * .65;
-        float size = .0006 + pow(magnitude, 3.) * .0012;
+        float size = .0003 + pow(magnitude, 3.) * .0007;
         float width = max(size, footprint * .6);
         // Compact antialiased point: no halo, blur or depth-of-field layer.
         float core = 1. - smoothstep(width * .25, width, distanceToStar);
@@ -95,22 +95,35 @@ export function memorySkyMaterial() {
         return mix(mix(galaxyHash(i), galaxyHash(i + vec2(1., 0.)), f.x),
           mix(galaxyHash(i + vec2(0., 1.)), galaxyHash(i + 1.), f.x), f.y);
       }
-      // Independent slow orbital phases, inspired by canvas-galaxy (no code copied).
+      float galaxyCloud(vec2 p) {
+        float sum = 0., weight = .52;
+        for (int i = 0; i < 3; i++) {
+          sum += galaxyNoise(p) * weight;
+          p = mat2(.8, -.6, .6, .8) * p * 2.07 + 13.7;
+          weight *= .48;
+        }
+        return sum;
+      }
+      // Detailed dust clouds are evaluated only in the small cached galaxy texture.
       vec3 galaxyLight(vec3 d, float footprint) {
-        float latitude = dot(d, normalize(vec3(-.24, .94, .25))) + .05;
-        if (abs(latitude) > .34) return vec3(0.);
-        vec2 uv = vec2(atan(d.z, d.x) * 3., latitude * 9.);
-        vec2 drift = vec2(skyTime * .0008, skyTime * .0002);
-        float clouds = galaxyNoise(uv * 2. + drift) * .65 + galaxyNoise(uv * 4. + drift) * .35;
-        float detail = galaxyNoise(uv * 11. + drift);
-        float bend = (galaxyNoise(uv * .65) - .5) * .075;
-        float band = exp(-pow((latitude + bend) / .12, 2.));
-        float dust = smoothstep(.37, .66, galaxyNoise(uv * 3.1 + 11.));
-        float structure = (.18 + clouds * .95 + detail * .12) * (1. - dust * .75);
-        vec3 mist = mix(vec3(.17, .25, .48), vec3(.39, .28, .47), clouds);
-        float dustStars = smoothstep(.82, .96, galaxyNoise(uv * 180.));
-        return (mist * structure + vec3(.64, .67, .78) * dustStars * .12)
-          * band * milkyWayStrength;
+        float latitude = dot(d, normalize(vec3(.23, .95, .15))) + .25;
+        if (abs(latitude) > .65) return vec3(0.);
+        vec2 uv = vec2(atan(d.z, d.x) * 3.5, latitude * 5.);
+        vec2 drift = vec2(skyTime * .0007, skyTime * .00015);
+        vec2 warp = vec2(galaxyCloud(uv + drift), galaxyCloud(uv + 17. + drift));
+        float wisps = galaxyCloud(uv * 2.8 + warp * 2.7);
+        float fine = galaxyCloud(uv * 8. + warp);
+        float ridge = latitude + (warp.x - .5) * .17;
+        float wide = exp(-ridge * ridge / .018);
+        float core = exp(-ridge * ridge / .004);
+        float dust = smoothstep(.38, .63, galaxyCloud(uv * 3.6 + warp * 3. + 8.));
+        float lane = exp(-pow((ridge + (wisps - .5) * .24) / .025, 2.));
+        float cloud = smoothstep(.16, .68, wisps) * (.65 + fine * .8);
+        vec3 blue = vec3(.012, .035, .2) * wide * (.23 + cloud);
+        vec3 pearl = mix(vec3(.08, .05, .19), vec3(.17, .12, .22), fine);
+        vec3 light = blue + pearl * core * cloud * 1.35;
+        light *= (1. - dust * .78) * (1. - lane * .72);
+        return light * milkyWayStrength;
       }
       float shootingStar(vec2 pixel, float time) {
         float cycle = floor(time / 8.);
@@ -160,7 +173,7 @@ export function memorySkyMaterial() {
           night += distantStars(direction, footprint) * subjectQuiet * awayFromMoon * skyOnly;
           // Far-sky band; protect the central photo waterfall and the moon.
           if (milkyWayStrength > 0.) {
-            night += galaxyLight(direction, footprint) * subjectQuiet * awayFromMoon * skyOnly;
+            night += galaxyLight(direction, footprint) * subjectQuiet * awayFromMoon * smoothstep(-.4, -.12, direction.y);
           }
           color = mix(color, night, nightMix);
         }
@@ -214,7 +227,7 @@ export class NightGalaxyCache {
   }
   update(renderer, camera, low) {
     const u = this.sky.material.uniforms; if (u.nightMix.value <= 0.) return;
-    const size = u.skyResolution.value, scale = Math.min(1, (low ? 256 : 480) / Math.max(size.x, size.y));
+    const size = u.skyResolution.value, scale = Math.min(1, (low ? 192 : 320) / Math.max(size.x, size.y));
     const w = Math.max(2, Math.round(size.x * scale)), h = Math.max(2, Math.round(size.y * scale));
     const resized = w !== this.target.width || h !== this.target.height;
     if (!resized && this.time >= 0 && Math.abs(u.skyTime.value - this.time) < 1 / 12 && this.strength === u.milkyWayStrength.value &&
