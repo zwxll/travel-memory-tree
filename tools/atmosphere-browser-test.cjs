@@ -45,7 +45,7 @@ const entry = pathToFileURL(path.resolve(__dirname, '../index.html')).href;
     assert.equal(night.mix, 1); assert.deepEqual(night.colors, before.colors, 'photo color values must not be tinted by night lighting');
     assert.ok(await page.evaluate(day => travelTree.scene.trunkKeepsakes.getObjectByName('trunk-night-lamps').userData.glassMaterial.emissiveIntensity > day, dayLamp.emission), 'nightlights brighten softly after dark');
     assert.deepEqual(night.positions, before.positions, 'night mode does not rearrange photos');
-    assert.ok(night.stars && night.flies && night.moving); assert.ok(night.flyCount <= 42); assert.equal(night.pointLights, 1);
+    assert.ok(night.stars && night.flies && night.moving); assert.ok(night.flyCount <= 96); assert.equal(night.pointLights, 1);
     const breath = await page.evaluate(() => {
       const s = travelTree.scene, a = s.atmosphere, card = s.cards[0]; s.hovered = card.photo;
       a.enabled = false; a.update(0); const baseline = card.plate.material.emissiveIntensity; a.enabled = true;
@@ -77,7 +77,7 @@ const entry = pathToFileURL(path.resolve(__dirname, '../index.html')).href;
       for (let i = 0; i < 50; i++) a.update(.05);
       s.running = false; return { low: a.lowDensity, flies: a.fireflies.geometry.drawRange.count };
     });
-    assert.ok(low.low && low.flies <= 16, 'sustained slow frames automatically reduce density');
+    assert.ok(low.low && low.flies <= 36, 'sustained slow frames automatically reduce density');
     await page.evaluate(() => travelTree.scene.setRunning(true));
     await page.locator('#heart-gather').click();
     await page.waitForFunction(() => !travelTree.scene.heartGather && !travelTree.scene.flight);

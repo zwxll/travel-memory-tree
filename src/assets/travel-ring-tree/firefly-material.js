@@ -14,7 +14,7 @@ export function fireflyMaterial() {
         tint = color;
         float pulse = .62 + .25 * sin(time * (.65 + fract(phase) * .4) + phase)
           + .1 * sin(time * .37 + phase * 2.3);
-        alpha = pulse * smoothstep(2.5, 3.4, position.y) * (1. - smoothstep(9.5, 10.5, position.y));
+        alpha = pulse * smoothstep(2.5, 3.4, position.y) * (1. - smoothstep(16.5, 17.5, position.y));
       }`,
     fragmentShader: `uniform float opacity; varying vec3 tint; varying float alpha;
       void main() {

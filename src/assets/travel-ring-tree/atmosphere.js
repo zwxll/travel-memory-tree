@@ -31,15 +31,15 @@ export class TreeAtmosphere {
     let seed = 74123;
     const rand = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
     this.flyRest = [];
-    const flyPositions = new Float32Array(42 * 3);
-    for (let i = 0; i < 42; i++) {
+    const flyPositions = new Float32Array(96 * 3);
+    for (let i = 0; i < 96; i++) {
       const angle = i * 2.39996 + rand() * .3, radius = 9.5 + rand() * 5.5;
-      const point = new THREE.Vector3(Math.cos(angle) * radius, 2.5 + rand() * 8, Math.sin(angle) * radius);
+      const point = new THREE.Vector3(Math.cos(angle) * radius, 2.5 + ((i * 37) % 96 + rand()) / 96 * 15, Math.sin(angle) * radius);
       this.flyRest.push(point); flyPositions.set(point.toArray(), i * 3);
     }
     const geometry = new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(flyPositions, 3));
     const colors = [], phases = [];
-    for (let i = 0; i < 42; i++) { colors.push(...new THREE.Color(['#f4ff8a', '#c6ff6b', '#ffe28a'][i % 3]).toArray()); phases.push(i * 2.39996); }
+    for (let i = 0; i < 96; i++) { colors.push(...new THREE.Color(['#f4ff8a', '#c6ff6b', '#ffe28a'][i % 3]).toArray()); phases.push(i * 2.39996); }
     geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
     geometry.setAttribute('phase', new THREE.Float32BufferAttribute(phases, 1));
     this.fireflies = new THREE.Points(geometry, fireflyMaterial());
@@ -90,7 +90,7 @@ export class TreeAtmosphere {
   }
 
   applyDensity() {
-    this.fireflies.geometry.setDrawRange(0, this.lowDensity ? 16 : 42);
+    this.fireflies.geometry.setDrawRange(0, this.lowDensity ? 36 : 96);
     if (this.heartSparkles) { this.sparkleStride = this.lowDensity ? 6 : 3; this.heartSparkles.count = Math.ceil(this.owner.cards.length / this.sparkleStride); }
     this.petals.children.forEach((petal, i) => { petal.visible = i < (this.lowDensity ? 2 : 6); });
   }
@@ -138,7 +138,7 @@ export class TreeAtmosphere {
     if (active && n > .005) {
       for (let i = 0; i < this.fireflies.geometry.drawRange.count; i++) {
         const rest = this.flyRest[i], phase = i * 2.39996;
-        positions.setXYZ(i, rest.x + Math.sin(t * .23 + phase) * 1.1, 2.5 + ((rest.y - 2.5 + t * .22) % 8), rest.z + Math.cos(t * .19 + phase) * .9);
+        positions.setXYZ(i, rest.x + Math.sin(t * .23 + phase) * 1.1, 2.5 + ((rest.y - 2.5 + t * .22) % 15), rest.z + Math.cos(t * .19 + phase) * .9);
       }
       positions.needsUpdate = true;
     }
