@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { fireflyMaterial } from './firefly-material.js';
 
 // Small independent atmosphere layer. Photos keep their unlit, original-color material.
 export class TreeAtmosphere {
@@ -36,7 +37,13 @@ export class TreeAtmosphere {
       const point = new THREE.Vector3(Math.cos(angle) * radius, 2.5 + rand() * 8, Math.sin(angle) * radius);
       this.flyRest.push(point); flyPositions.set(point.toArray(), i * 3);
     }
-    this.fireflies = new THREE.Points(new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(flyPositions, 3)), new THREE.PointsMaterial({ color: '#e7ce98', map: this.glowMap, size: 1.05, transparent: true, opacity: 0, depthWrite: false }));
+    const geometry = new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(flyPositions, 3));
+    const colors = [], phases = [];
+    for (let i = 0; i < 42; i++) { colors.push(...new THREE.Color(['#f4ff8a', '#c6ff6b', '#ffe28a'][i % 3]).toArray()); phases.push(i * 2.39996); }
+    geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+    geometry.setAttribute('phase', new THREE.Float32BufferAttribute(phases, 1));
+    this.fireflies = new THREE.Points(geometry, fireflyMaterial());
+    this.fireflies.onBeforeRender = renderer => { this.fireflies.material.uniforms.pixelHeight.value = renderer.domElement.height; };
     this.fireflies.name = 'quiet-golden-fireflies'; this.fireflies.frustumCulled = false; this.group.add(this.fireflies);
     this.petals = new THREE.Group(); this.petals.name = 'quiet-day-petals'; this.group.add(this.petals);
     const petalGeometry = new THREE.SphereGeometry(.075, 6, 4).scale(.65, 1.5, .12);
@@ -126,12 +133,12 @@ export class TreeAtmosphere {
     for (const { light, day } of this.lights) light.intensity = day * (1 - n * (light.isHemisphereLight ? .57 : .82) + daylight);
     this.rim.intensity = n * .28;
     this.flowerNight.value = n; this.grassBrightness.value = .95 * (1 - .65 * n);
-    this.fireflies.visible = active && n > .005 && !this.owner.selected; this.fireflies.material.opacity = n * .82;
+    this.fireflies.visible = active && n > .005 && !this.owner.selected; this.fireflies.material.uniforms.opacity.value = n * .9; this.fireflies.material.uniforms.time.value = t;
     const positions = this.fireflies.geometry.attributes.position;
     if (active && n > .005) {
       for (let i = 0; i < this.fireflies.geometry.drawRange.count; i++) {
         const rest = this.flyRest[i], phase = i * 2.39996;
-        positions.setXYZ(i, rest.x + Math.sin(t * .23 + phase) * 1.1, rest.y + Math.sin(t * .28 + phase) * .45, rest.z + Math.cos(t * .19 + phase) * .9);
+        positions.setXYZ(i, rest.x + Math.sin(t * .23 + phase) * 1.1, 2.5 + ((rest.y - 2.5 + t * .22) % 8), rest.z + Math.cos(t * .19 + phase) * .9);
       }
       positions.needsUpdate = true;
     }
