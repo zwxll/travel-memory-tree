@@ -5,7 +5,7 @@ export function fireflyMaterial() {
   return new THREE.ShaderMaterial({
     transparent: true, depthWrite: false,
     uniforms: { time: { value: 0 }, opacity: { value: 0 }, pixelHeight: { value: 1000 } },
-    vertexShader: `attribute vec3 color; attribute float phase;
+    vertexShader: `attribute vec3 color; attribute float phase, flightHeight;
       uniform float time, pixelHeight; varying vec3 tint; varying float alpha;
       void main() {
         vec4 p = modelViewMatrix * vec4(position, 1.);
@@ -14,7 +14,7 @@ export function fireflyMaterial() {
         tint = color;
         float pulse = .62 + .25 * sin(time * (.65 + fract(phase) * .4) + phase)
           + .1 * sin(time * .37 + phase * 2.3);
-        alpha = pulse * smoothstep(2.5, 3.4, position.y) * (1. - smoothstep(16.5, 17.5, position.y));
+        alpha = pulse * smoothstep(.45, 1., position.y) * (1. - smoothstep(flightHeight - .3, flightHeight + .45, position.y));
       }`,
     fragmentShader: `uniform float opacity; varying vec3 tint; varying float alpha;
       void main() {

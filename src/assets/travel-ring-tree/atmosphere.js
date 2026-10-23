@@ -33,8 +33,8 @@ export class TreeAtmosphere {
     this.flyRest = [];
     const flyPositions = new Float32Array(96 * 3);
     for (let i = 0; i < 96; i++) {
-      const angle = i * 2.39996 + rand() * .3, radius = 9.5 + rand() * 5.5;
-      const point = new THREE.Vector3(Math.cos(angle) * radius, 2.5 + ((i * 37) % 96 + rand()) / 96 * 15, Math.sin(angle) * radius);
+      const angle = i * 2.39996 + rand() * .3, radius = i % 5 === 0 ? 9.5 + rand() * 5.5 : 2 + Math.sqrt(rand()) * 10;
+      const point = new THREE.Vector3(Math.cos(angle) * radius, .45 + rand() * (i % 5 === 0 ? 8 : 3), Math.sin(angle) * radius);
       this.flyRest.push(point); flyPositions.set(point.toArray(), i * 3);
     }
     const geometry = new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(flyPositions, 3));
@@ -42,6 +42,7 @@ export class TreeAtmosphere {
     for (let i = 0; i < 96; i++) { colors.push(...new THREE.Color(['#f4ff8a', '#c6ff6b', '#ffe28a'][i % 3]).toArray()); phases.push(i * 2.39996); }
     geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
     geometry.setAttribute('phase', new THREE.Float32BufferAttribute(phases, 1));
+    geometry.setAttribute('flightHeight', new THREE.Float32BufferAttribute(Array.from({ length: 96 }, (_, i) => i % 5 === 0 ? 8 : 3), 1));
     this.fireflies = new THREE.Points(geometry, fireflyMaterial());
     this.fireflies.onBeforeRender = renderer => { this.fireflies.material.uniforms.pixelHeight.value = renderer.domElement.height; };
     this.fireflies.name = 'quiet-golden-fireflies'; this.fireflies.frustumCulled = false; this.group.add(this.fireflies);
@@ -138,7 +139,7 @@ export class TreeAtmosphere {
     if (active && n > .005) {
       for (let i = 0; i < this.fireflies.geometry.drawRange.count; i++) {
         const rest = this.flyRest[i], phase = i * 2.39996;
-        positions.setXYZ(i, rest.x + Math.sin(t * .23 + phase) * 1.1, 2.5 + ((rest.y - 2.5 + t * .22) % 15), rest.z + Math.cos(t * .19 + phase) * .9);
+        positions.setXYZ(i, rest.x + Math.sin(t * .23 + phase) * 1.1, .45 + ((rest.y - .45 + t * .12) % (i % 5 === 0 ? 8 : 3)), rest.z + Math.cos(t * .19 + phase) * .9);
       }
       positions.needsUpdate = true;
     }
