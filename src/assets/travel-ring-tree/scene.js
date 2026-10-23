@@ -25,7 +25,9 @@ export class TravelRingTreeScene extends CanopyScene {
       if (uniforms?.topColor) {
         // 背景始终围绕相机，手机远景不会露出天空球的裁切边缘。
         object.frustumCulled = false;
-        object.onBeforeRender = (_renderer, _scene, camera) => {
+        object.onBeforeRender = (renderer, _scene, camera) => {
+          renderer.getDrawingBufferSize(uniforms.skyResolution.value);
+          this.atmosphere?.updateBackground();
           object.position.copy(camera.position); object.updateMatrixWorld(true);
           uniforms.sunDirection.value.copy(this.controls.target).sub(camera.position).normalize();
           uniforms.moonDirection.value.set(.7, .5, .5).unproject(camera).sub(camera.position).normalize();
@@ -54,6 +56,8 @@ export class TravelRingTreeScene extends CanopyScene {
   _buildAtmosphere() { this.atmosphere = new TreeAtmosphere(this); }
 
   setAtmosphere(night, effects) { this.atmosphere.set(night, effects); }
+
+  releaseContext() { this.atmosphere.releaseBackground(); super.releaseContext(); }
 
   setPhotos(photos, cities, years) {
     this.photos = photos; this.stories = cities;
@@ -129,7 +133,7 @@ export class TravelRingTreeScene extends CanopyScene {
     this.atmosphere.attachTree();
     this._updatePhotoThreads();
     this.resize();
-    this.controls.maxDistance = Math.max(70, this.wholeView().pos.distanceTo(this.wholeView().target) * 1.5);
+    this.controls.maxDistance = this.wholeView().pos.distanceTo(this.wholeView().target);
   }
 
   setEnvelopes(records) { this.envelopes.setRecords(records); this._updateCards(0); this.redraw(); }
@@ -448,7 +452,7 @@ export class TravelRingTreeScene extends CanopyScene {
     });
     this.heartGather = animate && !this.reducedMotion ? { elapsed: 0, starts, mode } : null;
     if (!this.heartGather) this.cards.forEach(card => card.group.position.copy(card.photo.rest));
-    const whole = this.wholeView(); this.controls.maxDistance = Math.max(70, whole.pos.distanceTo(whole.target) * 1.5);
+    const whole = this.wholeView(); this.controls.maxDistance = whole.pos.distanceTo(whole.target);
     this._updateCards(0); this.redraw();
   }
 
@@ -684,7 +688,7 @@ export class TravelRingTreeScene extends CanopyScene {
     this._finishHeartGather();
     if (this.yearTransition) this.setYear(this.yearTransition.year);
     const whole = this.wholeView();
-    this.controls.maxDistance = Math.max(70, whole.pos.distanceTo(whole.target) * 1.5);
+    this.controls.maxDistance = whole.pos.distanceTo(whole.target);
     const view = this.selected ? this.photoView(this.selected) : this.focusStory ? this.storyView(this.focusStory) : this.year !== null ? this._yearCityView(this.cards.filter(card => card.photo.year === this.year)) : this.wholeView();
     this.flight = null; this.yearTransition = null; this.controls.enabled = true;
     this.camera.position.copy(view.pos); this.controls.target.copy(view.target); this.camera.lookAt(view.target);

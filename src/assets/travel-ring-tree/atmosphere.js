@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { GlimmerBackground } from './glimmer-background.js';
 
 // Small independent atmosphere layer. Photos keep their unlit, original-color material.
 export class TreeAtmosphere {
@@ -108,6 +109,25 @@ export class TreeAtmosphere {
 
   pulseYear() { if (this.enabled) this.pulseAge = 0; }
 
+  updateBackground() {
+    if (!this.sky || this.mix <= .005 || this.glimmerUnavailable) return;
+    if (!this.glimmer) {
+      try { this.glimmer = new GlimmerBackground(); }
+      catch (error) { this.glimmerUnavailable = true; console.warn('Night background unavailable; retaining moonlit sky.', error); return; }
+    }
+    this.glimmer.update(this.effectTime, this.owner.width, this.owner.height, this.lowDensity);
+    this.sky.material.uniforms.glimmerMap.value = this.glimmer.texture;
+    const viewAspect = this.owner.width / this.owner.height, fieldAspect = this.glimmer.canvas.width / this.glimmer.canvas.height;
+    this.sky.material.uniforms.glimmerScale.value.set(Math.min(1, viewAspect / fieldAspect), Math.min(1, fieldAspect / viewAspect));
+    this.sky.material.uniforms.glimmerReady.value = 1;
+  }
+
+  releaseBackground() {
+    this.glimmer?.dispose(); this.glimmer = null;
+    this.sky.material.uniforms.glimmerMap.value = null;
+    this.sky.material.uniforms.glimmerReady.value = 0;
+  }
+
   update(dt) {
     const step = Math.min(Math.max(dt, 0), .1), active = this.enabled && !this.owner.reducedMotion;
     if (active) this.effectTime += step;
@@ -123,6 +143,7 @@ export class TreeAtmosphere {
       this.sky.material.uniforms.horizonColor.value.lerpColors(this.colors.dayHorizon, this.colors.nightHorizon, n);
       this.sky.material.uniforms.skyTime.value = t;
       this.sky.material.uniforms.nightMix.value = n;
+      this.updateBackground();
     }
     this.owner.scene.background.lerpColors(this.colors.dayFog, this.colors.nightFog, n);
     this.owner.scene.fog.color.copy(this.owner.scene.background);

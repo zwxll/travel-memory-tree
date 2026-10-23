@@ -7,6 +7,7 @@
 | Three.js 与 OrbitControls | [mrdoob/three.js](https://github.com/mrdoob/three.js) | `docs/THREE-LICENSE.txt` 与源码版权声明，MIT |
 | 草地、地形及花朵基础实现 | [Steve245270533/three-stylized](https://github.com/Steve245270533/three-stylized) | `src/assets/umbrella-canopy/vendor/garden/meadow/LICENSE`，MIT；版本见同目录 `UPSTREAM.json` |
 | RibbonGeometry 丝带几何 | [yomotsu/ribbon-geometry](https://github.com/yomotsu/ribbon-geometry) | `src/assets/travel-ring-tree/vendor/ribbon-geometry/LICENSE`，MIT；源码附完整声明 |
+| 夜间 Glimmer Vale 星光山谷 | [OriginKit](https://www.originkit.dev/components/glimmer-vale?preset=base) | `src/assets/travel-ring-tree/vendor/glimmer-vale/NOTICE.md`；[OriginKit 自定义许可](https://www.originkit.dev/docs/licensing)，不属于 MIT 许可 |
 
 旧版 EZ-Tree 生成器已不被当前场景引用，其未使用的源码已移除。仍保留 `src/assets/travel-ring-tree/vendor/ez-tree/LICENSE` 与来源说明，兼容已有离线构建的版权记录。
 

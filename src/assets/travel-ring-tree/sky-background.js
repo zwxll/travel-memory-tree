@@ -9,6 +9,8 @@ export function memorySkyMaterial() {
       cloudColor: { value: new THREE.Color('#fffdf8') }, sunColor: { value: new THREE.Color('#ffe2a7') },
       moonColor: { value: new THREE.Color('#ffedce') },
       skyTime: { value: 0 }, nightMix: { value: 0 },
+      glimmerMap: { value: null }, glimmerReady: { value: 0 }, skyResolution: { value: new THREE.Vector2(1, 1) },
+      glimmerScale: { value: new THREE.Vector2(1, 1) },
       sunDirection: { value: new THREE.Vector3(0, 0, -1) }, moonDirection: { value: new THREE.Vector3(0, .2, -1).normalize() },
       moonRight: { value: new THREE.Vector3(1, 0, 0) }, moonUp: { value: new THREE.Vector3(0, 1, 0) },
     },
@@ -21,6 +23,10 @@ export function memorySkyMaterial() {
       uniform vec3 topColor, horizonColor, cloudColor, sunColor, moonColor;
       uniform vec3 sunDirection, moonDirection, moonRight, moonUp;
       uniform float skyTime, nightMix;
+      uniform sampler2D glimmerMap;
+      uniform float glimmerReady;
+      uniform vec2 skyResolution;
+      uniform vec2 glimmerScale;
       varying vec3 vSkyDirection;
 
       float skyHash(vec2 p) {
@@ -52,6 +58,9 @@ export function memorySkyMaterial() {
         float clouds = smoothstep(.43, .68, cloudField(cloudUV + vec2(skyTime * .012, 0.)));
         clouds *= smoothstep(-.38, -.08, direction.y) * .62 * (1. - nightMix * .92);
         color = mix(color, mix(cloudColor, horizonColor, nightMix), clouds);
+
+        vec2 glimmerUV = (gl_FragCoord.xy / skyResolution - .5) * glimmerScale + .5;
+        color = mix(color, texture2D(glimmerMap, glimmerUV).rgb, nightMix * glimmerReady);
 
         // Only the lit crescent is painted, so its cutout keeps the sky behind it.
         vec3 relativeMoon = direction - moonDirection;
