@@ -19,5 +19,3 @@
 - [Teacher-s-Day-Wishes](https://github.com/Shuvam-Banerji-Seal/Teacher-s-Day-Wishes)：拆信动作顺序；该参考未提供根许可证，本项目自行实现相关动画。
 
 第三方许可证仅适用于各自的代码。个人照片、旅行资料及信件不包含在公开仓库中。
-
-夜空散景光点的配色、柔边与景深视觉参考 [React Bits Particles Bokeh](https://www.reactbits.dev/backgrounds/particles?preset=bokeh)。本项目在现有天空球中独立实现，未复制该组件源码，未引入 React 或第二套渲染器。

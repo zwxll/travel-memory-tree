@@ -53,10 +53,10 @@ export function memorySkyMaterial() {
       // Equal-area longitude/height cells: jittered, mostly empty, with many dim stars.
       // The direction belongs to the camera-centred dome, never to a photo or screen pixel.
       vec3 distantStars(vec3 direction, float footprint) {
-        vec2 grid = vec2(128., 64.);
+        vec2 grid = vec2(384., 192.);
         vec2 uv = vec2(atan(direction.z, direction.x) / 6.2831853 + .5, direction.y * .5 + .5);
         vec2 cell = floor(uv * grid);
-        if (skyHash(cell + 13.1) > .60 * starDensity) return vec3(0.);
+        if (skyHash(cell + 13.1) > .048 * starDensity) return vec3(0.);
         vec2 jitter = .15 + .7 * vec2(skyHash(cell + 37.7), skyHash(cell + 91.3));
         vec2 location = (cell + jitter) / grid;
         float longitude = (location.x - .5) * 6.2831853, height = location.y * 2. - 1.;
@@ -64,25 +64,18 @@ export function memorySkyMaterial() {
         vec3 starDirection = vec3(cos(longitude) * radius, height, sin(longitude) * radius);
         float distanceToStar = length(direction - starDirection);
         float magnitude = skyHash(cell + 57.9);
-        float energy = .08 + pow(magnitude, 2.) * .38;
-        // Bokeh palette and visual parameters inspired by React Bits Particles.
-        // Adapt the 140px base size to distant angular discs; no foreground parallax.
-        float size = .00065 + pow(magnitude, 3.) * .0035;
+        float energy = .07 + pow(magnitude, 5.) * .5;
+        float size = .0006 + pow(magnitude, 3.) * .0012;
         float width = max(size, footprint * .6);
-        float blur = width * (.18 + skyHash(cell + 8.3) * 1.1);
-        float core = 1. - smoothstep(max(0., width - blur), width + blur, distanceToStar);
-        float halo = exp(-distanceToStar * distanceToStar / (width * width * 4.)) * .09;
-        core = (core + halo) / (1. + blur / width);
+        // Compact antialiased point: no halo, blur or depth-of-field layer.
+        float core = 1. - smoothstep(width * .25, width, distanceToStar);
         // Integrate subpixel stars rather than letting them blink on/off while dragging.
         float coverage = min(1., size * size / (width * width));
         float phase = skyHash(cell + 72.4) * 6.2831853;
         float speed = .24 + skyHash(cell + 25.8) * .32;
         float twinkle = 1. + sin(skyTime * speed + phase) * .09
           + sin(skyTime * speed * 1.73 + phase * 2.3) * .035;
-        float palette = skyHash(cell + 104.2);
-        // Linear-light equivalents of #ffd9a8, #ff9e7a and #ffffff.
-        vec3 tint = palette < .333 ? vec3(1., .694, .392)
-          : (palette < .667 ? vec3(1., .342, .195) : vec3(1.));
+        vec3 tint = mix(vec3(1., .96, .88), vec3(.9, .95, 1.), skyHash(cell + 104.2));
         return tint * energy * coverage * core * twinkle;
       }
       float shootingStar(vec2 pixel, float time) {
