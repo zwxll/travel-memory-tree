@@ -18,23 +18,25 @@ const { chromium } = require(process.argv[2] || 'playwright');
       for (const child of s.scene.children) child.visible = child === a.sky;
       const gl = s.renderer.getContext(), pixel = new Uint8Array(4);
       const frame = () => { s.renderer.render(s.scene, s.camera); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel); };
-      const measure = refresh => {
+      const measure = rotate => {
         for (let i = 0; i < 4; i++) frame();
         const start = performance.now();
-        for (let i = 0; i < 15; i++) { if (refresh) s.nightGalaxy.time = -1; frame(); }
+        for (let i = 0; i < 15; i++) {
+          if (rotate) { s.camera.rotateY(.005); s.camera.updateMatrixWorld(); }
+          frame();
+        }
         return (performance.now() - start) / 15;
       };
-      const cachedMs = measure(false), draggingMs = measure(true), cache = s.nightGalaxy;
-      const time = cache.time; frame(); const frozen = cache.time === time;
-      s.camera.rotateY(.1); s.camera.updateMatrixWorld(); frame();
-      const followsCamera = cache.view.equals(s.camera.matrixWorld);
-      const width = cache.target.width, lit = pixel[2] > 10;
+      const staticMs = measure(false), draggingMs = measure(true);
+      const time = a.effectTime; a.update(.1); frame(); const frozen = a.effectTime === time;
+      const noCache = !s.nightGalaxy, calls = s.renderer.info.render.calls, lit = pixel[2] > 10;
       s.releaseContext(); frame();
-      return { cachedMs, draggingMs, width, frozen, followsCamera, lit, recreated: !!s.nightGalaxy && s.nightGalaxy !== cache };
+      a.set(false, false); a.mix = 0; a.update(0); frame();
+      a.set(true, true); a.mix = 1; a.update(.1); frame();
+      return { staticMs, draggingMs, frozen, calls, lit, noCache, staysDisabled: !s.nightGalaxy && a.sky.material.uniforms.milkyWayStrength.value === 0 };
     });
-    assert.ok(result.lit && result.width <= 480 && result.frozen && result.followsCamera && result.recreated, 'bounded cache must render, freeze, track the camera and recreate: ' + JSON.stringify(result));
-    assert.ok(result.draggingMs < result.cachedMs + 6, 'forcing a refresh must add less than 6ms on this GPU: ' + JSON.stringify(result));
+    assert.ok(result.lit && result.frozen && result.calls === 1 && result.noCache && result.staysDisabled, 'clear sky must use one pass and never allocate a galaxy cache, including after switching modes: ' + JSON.stringify(result));
     assert.deepEqual(errors, []);
-    console.log('PASS: night galaxy cache performance, frozen motion, camera tracking and context recreation', result);
+    console.log('PASS: clear night sky, single pass, frozen motion and no galaxy allocation', result);
   } finally { await browser.close(); }
 })().catch(e => { console.error(e); process.exitCode = 1; });

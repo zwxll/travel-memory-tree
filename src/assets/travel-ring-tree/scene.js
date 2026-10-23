@@ -30,7 +30,7 @@ export class TravelRingTreeScene extends CanopyScene {
         object.frustumCulled = false;
         object.onBeforeRender = (renderer, _scene, camera) => {
           renderer.getDrawingBufferSize(uniforms.skyResolution.value);
-          if (uniforms.nightMix.value > 0.) {
+          if (uniforms.nightMix.value > 0. && uniforms.milkyWayStrength.value > 0.) {
             this.nightGalaxy ||= new NightGalaxyCache(object);
             this.nightGalaxy.update(renderer, camera, this.width <= 760 || this.atmosphere?.lowDensity);
           }

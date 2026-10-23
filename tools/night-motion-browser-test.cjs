@@ -78,23 +78,23 @@ const root = path.resolve(__dirname, '..');
       s.camera.rotateY(.15); s.camera.updateMatrixWorld(); const rotated = render(10);
       let moved = 0; for (let i = 0; i < repeated.length; i += 4) if (Math.abs(rotated[i] - repeated[i]) > 12) moved++;
       s.camera.lookAt(target); s.camera.updateMatrixWorld();
-      // The optional haze remains a few display levels above the plain gradient.
+      // Night mode must stay clear: no galaxy haze over the gradient.
       u.milkyWayStrength.value = 0; const withoutHaze = render(4, 0); u.milkyWayStrength.value = haze;
       let hazeDelta = 0; for (let i = 0; i < plain.length; i++) hazeDelta = Math.max(hazeDelta, plain[i] - withoutHaze[i]);
       a.mix = 0; a.set(false, false); const dayStars = render(4), dayPlain = render(4, 0);
       const daySuppressed = dayStars.every((v, i) => v === dayPlain[i]);
       u.starDensity.value = density; hidden.forEach(o => { o.visible = true; }); a.set(true, false);
-      return { density, pixels, bright, changed, brighter, dimmer, maxChange, lower, staticPixels, stopped, translationError, moved, hazeDelta, daySuppressed, gradientDepth, skyCalls, haloInner, haloOuter };
+      return { density, haze, pixels, bright, changed, brighter, dimmer, maxChange, lower, staticPixels, stopped, translationError, moved, hazeDelta, daySuppressed, gradientDepth, skyCalls, haloInner, haloOuter };
     });
     const stars = await checkStars();
     assert.ok(stars.gradientDepth > 0 && stars.skyCalls === 1, 'layered blue gradient must render in a single sky pass: ' + JSON.stringify(stars));
     assert.ok(stars.haloInner > stars.haloOuter && stars.haloInner > 1 && stars.haloInner < 32 && stars.haloOuter >= 0, 'moon halo softly fades without a bright ring: ' + JSON.stringify(stars));
     assert.ok(stars.pixels > 400 && stars.pixels < 6000, 'compact realistic star points must remain sparse: ' + JSON.stringify(stars));
     assert.ok(stars.bright < stars.pixels * .5, 'most stars are faint');
-    assert.ok(stars.changed > 5 && stars.brighter > 3 && stars.dimmer > 3 && stars.maxChange <= 50, 'twinkle and slow galaxy movement remain restrained and unsynchronized: ' + JSON.stringify(stars));
+    assert.ok(stars.changed > 5 && stars.brighter > 3 && stars.dimmer > 3 && stars.maxChange <= 50, 'star twinkle remains restrained and unsynchronized: ' + JSON.stringify(stars));
     assert.ok(stars.staticPixels && stars.stopped && stars.daySuppressed, 'static night remains frozen and daytime has no stars');
     assert.ok(stars.translationError <= 2 && stars.moved > 80, 'distant stars follow rotation without foreground parallax: ' + JSON.stringify(stars));
-    assert.ok(stars.lower === 0 && stars.hazeDelta > 60 && stars.hazeDelta < 125, 'galaxy is visibly contrasted while the lower foreground stays clear: ' + JSON.stringify(stars));
+    assert.ok(stars.lower === 0 && stars.haze === 0 && stars.hazeDelta === 0, 'night sky and lower foreground must have no galaxy haze: ' + JSON.stringify(stars));
     const fixedMoon = await page.evaluate(() => {
       const s = travelTree.scene, a = s.atmosphere, gl = s.renderer.getContext();
       const hidden = s.scene.children.filter(o => o !== a.sky && o.visible); hidden.forEach(o => { o.visible = false; });
@@ -174,6 +174,6 @@ const root = path.resolve(__dirname, '..');
     await page.waitForFunction(() => travelTree.scene.reducedMotion && !travelTree.scene.atmosphere.enabled);
     assert.equal(await page.evaluate(() => travelTree.scene.atmosphere.sky.material.uniforms.motionEnabled.value), 0, 'reduced motion removes meteors');
     assert.deepEqual(errors, []); assert.deepEqual(requests, []);
-    console.log('PASS: sparse shader stars, independent gentle twinkle, static sky, far-sky camera relation, faint haze, effects switch, meteors, day/reduced-motion, phone and offline', { stars, phoneStars, desktop, mobile });
+    console.log('PASS: sparse shader stars, independent gentle twinkle, static sky, far-sky camera relation, haze-free sky, effects switch, meteors, day/reduced-motion, phone and offline', { stars, phoneStars, desktop, mobile });
   } finally { await browser.close(); }
 })().catch(e => { console.error(e); process.exitCode = 1; });

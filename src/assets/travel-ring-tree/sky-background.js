@@ -10,7 +10,7 @@ export function memorySkyMaterial() {
       moonColor: { value: new THREE.Color('#eef2ff') },
       nightTopColor: { value: new THREE.Color('#03091d') }, nightMidColor: { value: new THREE.Color('#081330') },
       nightHorizonColor: { value: new THREE.Color('#14223f') },
-      starDensity: { value: 1 }, milkyWayStrength: { value: .72 },
+      starDensity: { value: 1 }, milkyWayStrength: { value: 0 },
       skyTime: { value: 0 }, nightMix: { value: 0 },
       motionEnabled: { value: 0 },
       skyResolution: { value: new THREE.Vector2(1, 1) },
