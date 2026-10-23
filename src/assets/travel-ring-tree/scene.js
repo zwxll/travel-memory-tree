@@ -546,7 +546,7 @@ export class TravelRingTreeScene extends CanopyScene {
       card.dim = (this.year !== null && p.year !== this.year) || (this.focusStory && p.story !== this.focusStory) ? 1 : 0;
       if (p === this.selected) card.dim = 0;
       const weak = this.clusterMode && this.year === null && !this.focusStory && this.hoveredCity && p.story !== this.hoveredCity;
-      card.mat.color.setScalar(card.loaded ? (card.dim ? .26 : weak ? .65 : 1) : .45);
+      card.mat.color.setScalar(card.loaded ? (card.dim ? .26 : weak ? .65 : 1 + (this.atmosphere?.mix || 0) * .3) : .45);
       const position = card.group.getWorldPosition(this._clusterPoint);
       const want = Math.atan2(this.camera.position.x - position.x, this.camera.position.z - position.z) - (this.clusterMode ? card.group.parent.rotation.y : 0);
       card.yaw += Math.atan2(Math.sin(want - card.yaw), Math.cos(want - card.yaw)) * k;

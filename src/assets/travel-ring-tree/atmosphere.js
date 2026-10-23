@@ -173,7 +173,7 @@ export class TreeAtmosphere {
       const ambient = !this.owner.hovered && !this.owner.selected && !this.owner.focusStory && ambientHighlights < 5 && card.photo.indexInStory === 0 && (this.owner.year === null || card.photo.year === this.owner.year);
       if (ambient) ambientHighlights++;
       const important = ambient || card.photo === this.owner.hovered || card.photo === this.owner.selected || (this.owner.focusStory && card.photo.story === this.owner.focusStory && card.photo.indexInStory === 0);
-      card.plate.material.emissiveIntensity = .96 - n * .12 + (important && active ? n * (.11 + Math.sin(t * .85) * .055) : 0);
+      card.plate.material.emissiveIntensity = .96 - n * .58 + (important && active ? n * (.11 + Math.sin(t * .85) * .055) : 0);
     }
   }
 }
