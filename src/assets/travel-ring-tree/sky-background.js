@@ -64,7 +64,7 @@ export function memorySkyMaterial() {
         vec3 starDirection = vec3(cos(longitude) * radius, height, sin(longitude) * radius);
         float distanceToStar = length(direction - starDirection);
         float magnitude = skyHash(cell + 57.9);
-        float energy = .07 + pow(magnitude, 5.) * .5;
+        float energy = .091 + pow(magnitude, 5.) * .65;
         float size = .0006 + pow(magnitude, 3.) * .0012;
         float width = max(size, footprint * .6);
         // Compact antialiased point: no halo, blur or depth-of-field layer.
