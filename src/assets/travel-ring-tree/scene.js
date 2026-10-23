@@ -8,6 +8,7 @@ import { TreeAtmosphere } from './atmosphere.js';
 import { buildTrunkKeepsakes } from './trunk-keepsakes.js';
 import { addLoveDetails } from './love-details.js';
 import { createHangingEnvelopes } from './hanging-envelopes.js';
+import { frameKeepsakeMaterial, frameKeepsakes } from './photo-frame.js';
 
 const carouselPhotoScale = 1.15;
 
@@ -57,6 +58,7 @@ export class TravelRingTreeScene extends CanopyScene {
     this.scene.add(this.cardGroup);
     const clipGeometry = new THREE.BoxGeometry(.09 * this.heartScale, .18 * this.heartScale, .07 * this.heartScale);
     const clipMaterial = new THREE.MeshStandardMaterial({ color: '#b89169', roughness: .76 });
+    const keepsakeMaterial = frameKeepsakeMaterial();
     this.cards = photos.map(photo => {
       const group = new THREE.Group();
       const mat = new THREE.MeshBasicMaterial({ map: this.blankMap, color: 0xffffff, fog: false });
@@ -65,12 +67,13 @@ export class TravelRingTreeScene extends CanopyScene {
       const vertices = picture.geometry.attributes.position;
       for (let i = 0; i < vertices.count; i++) vertices.setZ(i, Math.sign(vertices.getZ(i)) * .05 * this.heartScale);
       vertices.needsUpdate = true;
-      const plate = new THREE.Mesh(new THREE.BoxGeometry(photo.w + .18 * this.heartScale, photo.h + .27 * this.heartScale, .035 * this.heartScale), new THREE.MeshLambertMaterial({ color: '#fffaf5' }));
+      // Warm emission supplies the paper color; the darker diffuse layer adds slight shading.
+      const plate = new THREE.Mesh(new THREE.BoxGeometry(photo.w + .18 * this.heartScale, photo.h + .27 * this.heartScale, .035 * this.heartScale), new THREE.MeshLambertMaterial({ color: '#4a3c2e', toneMapped: false, fog: false }));
       plate.position.y = -.035 * this.heartScale;
       picture.userData.photo = plate.userData.photo = photo;
       const clip = new THREE.Mesh(clipGeometry, clipMaterial);
       clip.position.set(0, photo.h / 2 + .075 * this.heartScale, .055 * this.heartScale); clip.userData.photo = photo;
-      group.add(plate, picture, clip); group.position.copy(photo.rest); this.cardGroup.add(group);
+      group.add(plate, picture, clip, frameKeepsakes(photo, this.heartScale, keepsakeMaterial)); group.position.copy(photo.rest); this.cardGroup.add(group);
       return { photo, group, mat, plate, clip, dim: 0, loaded: false, yaw: 0 };
     });
     this.photoThreads = new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(photos.length * 12), 3)), new THREE.LineBasicMaterial({ color: '#a78b79', transparent: true, opacity: .24, depthWrite: false }));

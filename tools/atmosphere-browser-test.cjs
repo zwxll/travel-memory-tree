@@ -48,12 +48,14 @@ const entry = pathToFileURL(path.resolve(__dirname, '../index.html')).href;
     assert.ok(night.stars && night.flies && night.moving); assert.ok(night.starCount <= 72 && night.flyCount <= 42); assert.equal(night.pointLights, 1);
     const breath = await page.evaluate(() => {
       const s = travelTree.scene, a = s.atmosphere, card = s.cards[0]; s.hovered = card.photo;
+      a.enabled = false; a.update(0); const baseline = card.plate.material.emissiveIntensity; a.enabled = true;
       a.update(.1); const first = card.plate.material.emissiveIntensity; a.update(.1);
       const second = card.plate.material.emissiveIntensity; s.hovered = null;
       s.flyToYear(2025); const triggered = a.pulseAge === 0; a.update(.1); const pulse = a.halo.visible && a.halo.material.opacity < .1;
-      a.update(.1); return { first, second, triggered, pulse };
+      a.update(.1); return { baseline, first, second, triggered, pulse };
     });
-    assert.ok(breath.first !== breath.second && breath.first > 0 && breath.first < .18 && breath.second < .18);
+    assert.ok(breath.baseline > .7 && breath.baseline < 1, 'warm paper retains a steady base brightness at night');
+    assert.ok(breath.first !== breath.second && breath.first > breath.baseline && breath.second > breath.baseline && breath.first - breath.baseline < .18 && breath.second - breath.baseline < .18, 'breathing stays subtle above the paper base brightness');
     assert.ok(breath.triggered && breath.pulse);
     await page.locator('#effects-toggle').click();
     assert.ok((await page.locator('#atmosphere-status').textContent()).includes('已停止'));
