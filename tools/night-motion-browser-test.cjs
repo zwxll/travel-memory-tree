@@ -91,10 +91,40 @@ const root = path.resolve(__dirname, '..');
     assert.ok(stars.haloInner > stars.haloOuter && stars.haloInner > 1 && stars.haloInner < 20 && stars.haloOuter >= 0, 'moon halo softly fades without a bright ring: ' + JSON.stringify(stars));
     assert.ok(stars.pixels > 400 && stars.pixels < 6000, 'compact realistic star points must remain sparse: ' + JSON.stringify(stars));
     assert.ok(stars.bright < stars.pixels * .5, 'most stars are faint');
-    assert.ok(stars.changed > 5 && stars.brighter > 3 && stars.dimmer > 3 && stars.maxChange < 25, 'twinkle is subtle and unsynchronized: ' + JSON.stringify(stars));
+    assert.ok(stars.changed > 5 && stars.brighter > 3 && stars.dimmer > 3 && stars.maxChange <= 50, 'twinkle and slow galaxy movement remain restrained and unsynchronized: ' + JSON.stringify(stars));
     assert.ok(stars.staticPixels && stars.stopped && stars.daySuppressed, 'static night remains frozen and daytime has no stars');
     assert.ok(stars.translationError <= 2 && stars.moved > 80, 'distant stars follow rotation without foreground parallax: ' + JSON.stringify(stars));
-    assert.ok(stars.lower === 0 && stars.hazeDelta <= 20, 'visible haze remains subdued without foreground glitter: ' + JSON.stringify(stars));
+    assert.ok(stars.lower === 0 && stars.hazeDelta <= 45, 'visible haze remains subdued without foreground glitter: ' + JSON.stringify(stars));
+    const fixedMoon = await page.evaluate(() => {
+      const s = travelTree.scene, a = s.atmosphere, gl = s.renderer.getContext();
+      const hidden = s.scene.children.filter(o => o !== a.sky && o.visible); hidden.forEach(o => { o.visible = false; });
+      const u = a.sky.material.uniforms, shader = a.sky.material.fragmentShader;
+      // Isolate the lunar disc so unrelated stars cannot influence the centroid.
+      a.sky.material.fragmentShader = shader.replace('vec3 lunarColor = moonColor * surface * (.68 + .32 * sqrt(max(0., illumination)));', 'vec3 lunarColor = vec3(1.);')
+        .replace('color = mix(color, lunarColor, crescent * nightMix);', 'color = vec3(crescent);');
+      a.sky.material.needsUpdate = true; u.motionEnabled.value = 0;
+      const measure = () => {
+        s.renderer.render(s.scene, s.camera);
+        const w = gl.drawingBufferWidth, h = gl.drawingBufferHeight, pixels = new Uint8Array(w * h * 4);
+        gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+        let x = 0, y = 0, count = 0;
+        for (let row = 0; row < h; row++) for (let col = 0; col < w; col++) {
+          if (pixels[(row * w + col) * 4] > 180) { x += col; y += row; count++; }
+        }
+        return { x: x / count, y: y / count, count };
+      };
+      const original = { pos: s.camera.position.clone(), quaternion: s.camera.quaternion.clone(), fov: s.camera.fov };
+      const before = measure(); s.camera.position.multiplyScalar(1.7); s.camera.rotateY(.28);
+      s.camera.fov = 68; s.camera.updateProjectionMatrix(); s.camera.updateMatrixWorld(); const after = measure();
+      s.camera.position.copy(original.pos); s.camera.quaternion.copy(original.quaternion); s.camera.fov = original.fov;
+      s.camera.updateProjectionMatrix(); s.camera.updateMatrixWorld();
+      a.sky.material.fragmentShader = shader; a.sky.material.needsUpdate = true;
+      hidden.forEach(o => { o.visible = true; }); a.set(true, false);
+      return { before, after };
+    });
+    assert.ok(fixedMoon.before.count > 100 && fixedMoon.before.count === fixedMoon.after.count
+      && Math.abs(fixedMoon.before.x - fixedMoon.after.x) < .01 && Math.abs(fixedMoon.before.y - fixedMoon.after.y) < .01,
+    'moon position and size stay fixed through orbit, zoom and FOV changes: ' + JSON.stringify(fixedMoon));
     await page.locator('#effects-toggle').click();
     assert.equal(await page.evaluate(() => travelTree.scene.atmosphere.sky.material.uniforms.motionEnabled.value), 0);
     await page.locator('#effects-toggle').click();

@@ -10,7 +10,7 @@ export function memorySkyMaterial() {
       moonColor: { value: new THREE.Color('#ffedce') },
       nightTopColor: { value: new THREE.Color('#182438') }, nightMidColor: { value: new THREE.Color('#344259') },
       nightHorizonColor: { value: new THREE.Color('#495166') },
-      starDensity: { value: 1 }, milkyWayStrength: { value: .018 },
+      starDensity: { value: 1 }, milkyWayStrength: { value: .105 },
       skyTime: { value: 0 }, nightMix: { value: 0 },
       motionEnabled: { value: 0 },
       skyResolution: { value: new THREE.Vector2(1, 1) },
@@ -78,6 +78,31 @@ export function memorySkyMaterial() {
         vec3 tint = mix(vec3(1., .96, .88), vec3(.9, .95, 1.), skyHash(cell + 104.2));
         return tint * energy * coverage * core * twinkle;
       }
+      // Independent slow orbital phases, inspired by canvas-galaxy (no code copied).
+      vec3 galaxyLight(vec3 d, float footprint) {
+        float latitude = dot(d, normalize(vec3(-.24, .94, .25))) + .05;
+        vec2 uv = vec2(atan(d.z, d.x) * 3., latitude * 9.);
+        vec2 drift = vec2(skyTime * .0008, skyTime * .0002);
+        float clouds = cloudField(uv * 2. + drift);
+        float detail = skyNoise(uv * 11. + drift);
+        float bend = (skyNoise(uv * .65) - .5) * .075;
+        float band = exp(-pow((latitude + bend) / .12, 2.));
+        float dust = smoothstep(.37, .66, cloudField(uv * 3.1 + 11.));
+        float structure = (.18 + clouds * .95 + detail * .12) * (1. - dust * .75);
+        vec3 mist = mix(vec3(.17, .25, .48), vec3(.39, .28, .47), clouds);
+        float dustStars = smoothstep(.82, .96, skyNoise(uv * 180.));
+        // Two sparse angular layers drift at different speeds, never around the tree.
+        float angle = skyTime * .00012;
+        vec3 orbit = vec3(cos(angle) * d.x - sin(angle) * d.z, d.y,
+          sin(angle) * d.x + cos(angle) * d.z);
+        vec3 movingStars = distantStars(orbit, footprint) * .35;
+        angle *= .57;
+        orbit = vec3(cos(angle) * d.x + sin(angle) * d.z, d.y,
+          -sin(angle) * d.x + cos(angle) * d.z);
+        movingStars += distantStars(normalize(orbit + vec3(.02, .04, .01)), footprint) * .22 * starDensity;
+        return (mist * structure + vec3(.64, .67, .78) * dustStars * .12)
+          * band * milkyWayStrength + movingStars * band;
+      }
       float shootingStar(vec2 pixel, float time) {
         float cycle = floor(time / 8.);
         float progress = clamp((mod(time, 8.) - .8) / 1.6, 0., 1.);
@@ -117,31 +142,33 @@ export function memorySkyMaterial() {
           vec2 screen = gl_FragCoord.xy / skyResolution;
           float subjectQuiet = mix(.22, 1., smoothstep(.35, 1.15,
             length((screen - vec2(.5, .5)) / vec2(.29, .48))));
-          float moonDistance = length(direction - moonDirection);
-          float awayFromMoon = smoothstep(.025, .13, moonDistance);
+          float moonDistance = length((gl_FragCoord.xy - skyResolution * vec2(.85, .75)) / skyResolution.y);
+          float awayFromMoon = smoothstep(.04, .16, moonDistance);
           float skyOnly = smoothstep(-.22, .07, direction.y);
           float footprint = max(length(dFdx(direction)), length(dFdy(direction)));
           night += distantStars(direction, footprint) * subjectQuiet * awayFromMoon * skyOnly;
-          // Two noise scales suggest distant stardust, without a nebula or another sky pass.
+          // Far-sky band; protect the central photo waterfall and the moon.
           if (milkyWayStrength > 0.) {
-            float latitude = dot(direction, normalize(vec3(-.34, .84, .42))) + .10;
-            vec2 bandUV = vec2(atan(direction.z, direction.x) * 3., direction.y * 7.);
-            float structure = skyNoise(bandUV) * .65 + skyNoise(bandUV * 2.1 + 17.) * .35;
-            float band = exp(-latitude * latitude / .032) * smoothstep(.25, .72, structure);
-            night += mix(vec3(.67, .72, .85), vec3(.85, .8, .74), structure)
-              * band * milkyWayStrength * subjectQuiet * awayFromMoon * skyOnly;
+            night += galaxyLight(direction, footprint) * subjectQuiet * awayFromMoon * skyOnly;
           }
           color = mix(color, night, nightMix);
         }
-        vec3 relativeMoon = direction - moonDirection;
-        vec2 moonUV = vec2(dot(relativeMoon, moonRight), dot(relativeMoon, moonUp)) / .018;
-        float disc = 1. - smoothstep(.94, 1.04, length(moonUV));
-        float cutout = smoothstep(.94, 1.04, length(moonUV - vec2(.5, .12)));
+        // Pixel-space lunar disc: fixed location and size across camera orbit/FOV/zoom.
+        float moonRadius = clamp(min(skyResolution.x, skyResolution.y) * .032, 12., 30.);
+        vec2 moonUV = (gl_FragCoord.xy - skyResolution * vec2(.85, .75)) / moonRadius;
+        moonUV = mat2(.94, -.342, .342, .94) * moonUV;
         float moonRadius2 = dot(moonUV, moonUV);
-        float moonGlow = (exp(-moonRadius2 * .26) * .035
-          + exp(-moonRadius2 * .012) * .009) * nightMix;
+        float aa = 1.2 / moonRadius;
+        float disc = 1. - smoothstep(1. - aa, 1. + aa, length(moonUV));
+        vec3 normal = vec3(moonUV, sqrt(max(0., 1. - moonRadius2)));
+        float illumination = dot(normal, normalize(vec3(.91, .12, -.4)));
+        float crescent = smoothstep(-aa, aa, illumination) * disc;
+        float surface = .79 + .13 * skyNoise(moonUV * 14.) + .08 * skyNoise(moonUV * 37.);
+        float moonGlow = (exp(-moonRadius2 * .32) * .028
+          + exp(-moonRadius2 * .015) * .006) * nightMix;
         color = mix(color, moonColor, moonGlow);
-        color = mix(color, moonColor, disc * cutout * nightMix * .94);
+        vec3 lunarColor = moonColor * surface * (.68 + .32 * sqrt(max(0., illumination)));
+        color = mix(color, lunarColor, crescent * nightMix);
         if (nightMix > .005 && motionEnabled > .5) {
           color += vec3(.86, .91, 1.) * shootingStar(gl_FragCoord.xy / skyResolution.y, skyTime) * nightMix;
         }

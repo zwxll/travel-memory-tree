@@ -19,3 +19,5 @@
 - [Teacher-s-Day-Wishes](https://github.com/Shuvam-Banerji-Seal/Teacher-s-Day-Wishes)：拆信动作顺序；该参考未提供根许可证，本项目自行实现相关动画。
 
 第三方许可证仅适用于各自的代码。个人照片、旅行资料及信件不包含在公开仓库中。
+
+动态银河的不同轨道速度与独立透明度变化参考 [canvas-galaxy](https://github.com/17881055/canvas-galaxy) 的 Star.js；该仓库未提供根许可证，仅借鉴算法思路，未复制源码或烟雾贴图。浪漫星光布局参考 [moonlight-love-letter-h5](https://github.com/keyingshuzhi/moonlight-love-letter-h5)（Apache-2.0），仅作视觉参考，未复制源码或素材。银河噪声、暗尘和月相着色继续参考已有 MIT 来源 procedural-stars-threejs。

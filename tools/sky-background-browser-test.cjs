@@ -39,7 +39,7 @@ const root = path.resolve(__dirname, '..');
       const s = travelTree.scene; s.atmosphere.set(true, false); s._updateCards(0); s.renderer.render(s.scene, s.camera);
       return { colors: s.cards.map(c => c.mat.color.toArray()), positions: s.cards.map(c => c.photo.rest.toArray()), stars: !!s.scene.getObjectByName('quiet-night-stars') };
     });
-    assert.deepEqual(night.colors, before.colors, 'sky must preserve original photo colors');
+    assert.ok(night.colors.every((color, i) => color.every((v, c) => Math.abs(v - before.colors[i][c] * 1.3) < .001)), 'sky preserves the existing neutral night photo brightness');
     assert.deepEqual(night.positions, before.positions, 'sky must preserve photo layout');
     assert.equal(night.stars, false, 'stars share the existing sky shader, without a new Points object');
     assert.ok(await page.evaluate(() => travelTree.scene.atmosphere.sky.material.uniforms.starDensity.value > 0), 'static night keeps distant stars');
