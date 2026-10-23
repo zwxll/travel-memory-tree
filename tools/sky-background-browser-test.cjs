@@ -41,7 +41,8 @@ const root = path.resolve(__dirname, '..');
     });
     assert.deepEqual(night.colors, before.colors, 'sky must preserve original photo colors');
     assert.deepEqual(night.positions, before.positions, 'sky must preserve photo layout');
-    assert.equal(night.stars, false, 'background stars are removed');
+    assert.equal(night.stars, false, 'stars share the existing sky shader, without a new Points object');
+    assert.ok(await page.evaluate(() => travelTree.scene.atmosphere.sky.material.uniforms.starDensity.value > 0), 'static night keeps distant stars');
     const moonPixels = async () => {
       const png = await page.screenshot();
       return page.evaluate(async source => {
@@ -62,6 +63,7 @@ const root = path.resolve(__dirname, '..');
     await page.screenshot({ path: path.join(root, '.local/sky-night.png') });
     await page.setViewportSize({ width: 390, height: 844 });
     await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.waitForFunction(() => travelTree.scene.width === 390 && travelTree.scene.reducedMotion && !travelTree.scene.atmosphere.enabled);
     await page.evaluate(() => {
       const s = travelTree.scene, view = s.wholeView(); s.flight = null;
       s.camera.position.copy(view.pos); s.controls.target.copy(view.target); s.controls.update(); s._updateCards(0); s.renderer.render(s.scene, s.camera);
@@ -76,6 +78,6 @@ const root = path.resolve(__dirname, '..');
     await page.locator('#night-toggle').click();
     await page.screenshot({ path: path.join(root, '.local/sky-mobile-day.png') });
     assert.deepEqual(errors, []); assert.deepEqual(network, []);
-    console.log('PASS: single offline sky dome, drifting/stopped clouds, day/night, desktop/mobile crescent, no background stars and unchanged photos', { desktopMoon, mobileMoon });
+    console.log('PASS: single offline sky dome, drifting/stopped clouds, day/night, desktop/mobile crescent, static shader stars and unchanged photos', { desktopMoon, mobileMoon });
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

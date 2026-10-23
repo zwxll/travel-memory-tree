@@ -7,6 +7,7 @@
 | Three.js 与 OrbitControls | [mrdoob/three.js](https://github.com/mrdoob/three.js) | `docs/THREE-LICENSE.txt` 与源码版权声明，MIT |
 | 草地、地形及花朵基础实现 | [Steve245270533/three-stylized](https://github.com/Steve245270533/three-stylized) | `src/assets/umbrella-canopy/vendor/garden/meadow/LICENSE`，MIT；版本见同目录 `UPSTREAM.json` |
 | RibbonGeometry 丝带几何 | [yomotsu/ribbon-geometry](https://github.com/yomotsu/ribbon-geometry) | `src/assets/travel-ring-tree/vendor/ribbon-geometry/LICENSE`，MIT；源码附完整声明 |
+| 夜空渐变、星光闪烁、月光晕与极淡银河的实现参考 | [CK42BB/procedural-stars-threejs](https://github.com/CK42BB/procedural-stars-threejs) | `src/assets/travel-ring-tree/vendor/procedural-stars/LICENSE`，MIT；锁定版本与改写说明见同目录 `NOTICE.md` |
 
 旧版 EZ-Tree 生成器已不被当前场景引用，其未使用的源码已移除。仍保留 `src/assets/travel-ring-tree/vendor/ez-tree/LICENSE` 与来源说明，兼容已有离线构建的版权记录。
 
