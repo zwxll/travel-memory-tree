@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { Grass } from '../umbrella-canopy/vendor/garden/meadow/src/grass/Grass.ts';
 import { enrichFlowers } from '../umbrella-canopy/js/flowers.js';
+import { memorySkyMaterial } from './sky-background.js';
 
 // Same licensed meadow components, planted up to the heart-shaped pebble border.
 export function buildTreeGarden(scene, reducedMotion) {
@@ -106,11 +107,8 @@ export function buildTreeGarden(scene, reducedMotion) {
   }
   pebbles.computeBoundingBox(); pebbles.computeBoundingSphere(); scene.add(pebbles);
   pebbles.count = surroundingStoneCount;
-  const sky = new THREE.Mesh(new THREE.SphereGeometry(130, 24, 16), new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false,
-    uniforms: { topColor: { value: new THREE.Color('#aecada') }, horizonColor: { value: new THREE.Color('#fae6c7') } },
-    vertexShader: 'varying float vHeight;void main(){vHeight=normalize(position).y;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
-    fragmentShader: 'uniform vec3 topColor;uniform vec3 horizonColor;varying float vHeight;void main(){gl_FragColor=vec4(mix(horizonColor,topColor,smoothstep(-.05,.65,vHeight)),1.0);\n#include <colorspace_fragment>\n}'
-  }));
+  const sky = new THREE.Mesh(new THREE.SphereGeometry(130, 24, 16), memorySkyMaterial());
+  sky.name = 'memory-day-night-sky';
   scene.add(sky);
   let motionEnabled = !reducedMotion, motionTime = 0, previousTime = 0;
   return { meadow, flowerRing, pebbles,

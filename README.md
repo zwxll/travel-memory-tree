@@ -45,6 +45,7 @@ npm run setup
 双击 `index.html`，使用 Edge 或 Chrome 打开。展示无需服务器、登录或联网。通过左下角“添加城市”导入自己的照片，再保存到本项目文件夹。首次使用没有预置照片或私人故事。
 
 - 拖动旋转，滚轮缩放；右上角可切换木马、爱心、旋转速度及日夜氛围。
+- 白天是杏粉天空、缓慢薄云与树后暖光；夜晚是蓝灰天空、弯月与稀疏星光。关闭动态特效或启用减少动态效果时，云层保持静止。
 - 点击城市高亮对应照片；点击场景空白、树干或地面清除城市筛选，保持当前视角和缩放。
 - 点击照片查看完整图片，支持上一张、下一张、缩略图、方向键和 Esc。
 - 点击年份查看年度情书与城市路线；可修改城市故事。
@@ -83,9 +84,12 @@ node tools/album-browser-test.cjs "Playwright 模块路径"
 node tools/public-checkout-test.cjs "Playwright 模块路径"
 node tools/site-browser-test.cjs "Playwright 模块路径"
 node tools/route-layout-browser-test.cjs "Playwright 模块路径"
+node tools/sky-background-browser-test.cjs "Playwright 模块路径"
 ```
 
 场景类浏览器测试需要本地已有照片；`album-browser-test.cjs` 使用临时合成资料；`public-checkout-test.cjs` 只从 Git 文件创建临时副本，验证空白初始化、可重复构建与照片导入入口。测试生成的图片、报告和临时文件不会提交。
+
+`sky-background-browser-test.cjs` 使用公开示例，检查云层启停、日夜背景、电脑与手机上的弯月，以及照片原色和布局保持不变。
 
 ## 在线部署
 

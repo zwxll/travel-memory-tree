@@ -43,8 +43,8 @@ function syncAtmosphere(save = false) {
   $('effects-toggle').textContent = motionPreference.matches ? '系统已减弱动效' : effects ? '动态特效：已开启' : '动态特效：已关闭';
   $('effects-toggle').setAttribute('aria-pressed', String(effects));
   $('effects-toggle').disabled = motionPreference.matches;
-  $('atmosphere-status').textContent = motionPreference.matches ? '系统减少动态效果：萤火虫、微风与呼吸光已停止' : !effects ? '已停止：萤火虫、叶片摆动、相框呼吸光' : atmospherePreference.night ? '萤火虫慢漂 · 叶片微风 · 相框轻呼吸' : '少量花瓣 · 叶片微风 · 柔和日光';
-  $('effects-toggle').title = motionPreference.matches ? '系统已启用减少动态效果' : '控制花瓣、萤火虫、微风和呼吸光';
+  $('atmosphere-status').textContent = motionPreference.matches ? '系统减少动态效果：薄云、萤火虫、微风与呼吸光已停止' : !effects ? '已停止：薄云、萤火虫、叶片摆动、相框呼吸光' : atmospherePreference.night ? '弯月星光 · 萤火虫慢漂 · 相框轻呼吸' : '薄云慢漂 · 少量花瓣 · 柔和日光';
+  $('effects-toggle').title = motionPreference.matches ? '系统已启用减少动态效果' : '控制薄云、花瓣、萤火虫、微风和呼吸光';
   scene?.setAtmosphere(atmospherePreference.night, effects);
   if (save) try { localStorage.setItem('love-tree:atmosphere:v1', JSON.stringify(atmospherePreference)); } catch { /* Keep the current session setting. */ }
 }

@@ -23,10 +23,15 @@ export class TravelRingTreeScene extends CanopyScene {
     this.scene.traverse(object => {
       const uniforms = object.material?.uniforms;
       if (uniforms?.topColor) {
-        uniforms.topColor.value.set('#f2dce3'); uniforms.horizonColor.value.set('#fff6ed');
         // 背景始终围绕相机，手机远景不会露出天空球的裁切边缘。
         object.frustumCulled = false;
-        object.onBeforeRender = (_renderer, _scene, camera) => { object.position.copy(camera.position); object.updateMatrixWorld(true); };
+        object.onBeforeRender = (_renderer, _scene, camera) => {
+          object.position.copy(camera.position); object.updateMatrixWorld(true);
+          uniforms.sunDirection.value.copy(this.controls.target).sub(camera.position).normalize();
+          uniforms.moonDirection.value.set(.7, .5, .5).unproject(camera).sub(camera.position).normalize();
+          uniforms.moonRight.value.setFromMatrixColumn(camera.matrixWorld, 0);
+          uniforms.moonUp.value.setFromMatrixColumn(camera.matrixWorld, 1);
+        };
       }
     });
     this.common.uSway.value = 0;

@@ -10,9 +10,9 @@ export class TreeAtmosphere {
     this.sky = owner.scene.children.find(object => object.material?.uniforms?.topColor);
     this.lights = owner.scene.children.filter(object => object.isLight).map(light => ({ light, day: light.intensity }));
     this.colors = {
-      daySky: new THREE.Color('#f2dce3'), nightSky: new THREE.Color('#172332'),
-      dayHorizon: new THREE.Color('#fff6ed'), nightHorizon: new THREE.Color('#34414c'),
-      dayFog: new THREE.Color('#faf3ef'), nightFog: new THREE.Color('#24303b'),
+      daySky: new THREE.Color('#efd6ce'), nightSky: new THREE.Color('#1d2b3d'),
+      dayHorizon: new THREE.Color('#fff1df'), nightHorizon: new THREE.Color('#424f60'),
+      dayFog: new THREE.Color('#fbefe5'), nightFog: new THREE.Color('#293646'),
       dayGround: new THREE.Color('#e8ddd1'), nightGround: new THREE.Color('#596169'),
     };
     this.fogRGB = { r: 0, g: 0, b: 0 };
@@ -31,10 +31,10 @@ export class TreeAtmosphere {
     const rand = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
     const stars = new Float32Array(72 * 3);
     for (let i = 0; i < 72; i++) {
-      const angle = rand() * Math.PI * 2, y = .12 + rand() * .8, r = Math.sqrt(1 - y * y) * 104;
+      const angle = rand() * Math.PI * 2, y = -.5 + rand() * .85, r = Math.sqrt(1 - y * y) * 104;
       stars.set([Math.cos(angle) * r, y * 104, Math.sin(angle) * r], i * 3);
     }
-    this.stars = new THREE.Points(new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(stars, 3)), new THREE.PointsMaterial({ color: '#d9dfe2', size: .19, transparent: true, opacity: 0, depthWrite: false, fog: false }));
+    this.stars = new THREE.Points(new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(stars, 3)), new THREE.PointsMaterial({ color: '#eee3d1', size: .23, transparent: true, opacity: 0, depthWrite: false, fog: false }));
     this.stars.name = 'quiet-night-stars'; this.stars.frustumCulled = false;
     this.stars.onBeforeRender = (_renderer, _scene, camera) => { this.stars.position.copy(camera.position); this.stars.updateMatrixWorld(true); };
     this.group.add(this.stars);
@@ -121,6 +121,8 @@ export class TreeAtmosphere {
     if (this.sky) {
       this.sky.material.uniforms.topColor.value.lerpColors(this.colors.daySky, this.colors.nightSky, n);
       this.sky.material.uniforms.horizonColor.value.lerpColors(this.colors.dayHorizon, this.colors.nightHorizon, n);
+      this.sky.material.uniforms.skyTime.value = t;
+      this.sky.material.uniforms.nightMix.value = n;
     }
     this.owner.scene.background.lerpColors(this.colors.dayFog, this.colors.nightFog, n);
     this.owner.scene.fog.color.copy(this.owner.scene.background);
@@ -130,7 +132,7 @@ export class TreeAtmosphere {
     for (const { light, day } of this.lights) light.intensity = day * (1 - n * (light.isHemisphereLight ? .57 : .82) + daylight);
     this.rim.intensity = n * .28;
     this.flowerNight.value = n; this.grassBrightness.value = .95 * (1 - .65 * n);
-    this.stars.visible = n > .005; this.stars.material.opacity = n * .45;
+    this.stars.visible = n > .005; this.stars.material.opacity = n * .6;
     this.fireflies.visible = active && n > .005 && !this.owner.selected; this.fireflies.material.opacity = n * .82;
     const positions = this.fireflies.geometry.attributes.position;
     if (active && n > .005) {
