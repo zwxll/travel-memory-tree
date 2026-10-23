@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { TreeMemoryLights } from './memory-lights.js';
 
 // Small independent atmosphere layer. Photos keep their unlit, original-color material.
 export class TreeAtmosphere {
@@ -63,7 +62,6 @@ export class TreeAtmosphere {
   }
 
   attachTree() {
-    this.memoryLights = new TreeMemoryLights(this.owner.tree, this.glowMap); this.group.add(this.memoryLights);
     for (const card of this.owner.cards) card.plate.material.emissive.copy(this.photoGlow);
     const sparkleCanvas = document.createElement('canvas'); sparkleCanvas.width = sparkleCanvas.height = 64;
     const c = sparkleCanvas.getContext('2d'), glow = c.createRadialGradient(32, 32, 0, 32, 32, 30);
@@ -110,7 +108,6 @@ export class TreeAtmosphere {
     this.mix += ((this.night ? 1 : 0) - this.mix) * (active ? 1 - Math.exp(-step * 2.2) : 1);
     if (Math.abs(this.mix - (this.night ? 1 : 0)) < .001) this.mix = this.night ? 1 : 0;
     const n = this.mix, t = this.effectTime;
-    this.memoryLights?.update(t, n, this.lowDensity, !!this.owner.selected);
     if (this.sky) {
       this.sky.material.uniforms.topColor.value.lerpColors(this.colors.daySky, this.colors.nightSky, n);
       this.sky.material.uniforms.horizonColor.value.lerpColors(this.colors.dayHorizon, this.colors.nightHorizon, n);

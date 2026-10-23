@@ -43,8 +43,8 @@ function syncAtmosphere(save = false) {
   $('effects-toggle').textContent = motionPreference.matches ? '系统已减弱动效' : effects ? '动态特效：已开启' : '动态特效：已关闭';
   $('effects-toggle').setAttribute('aria-pressed', String(effects));
   $('effects-toggle').disabled = motionPreference.matches;
-  $('atmosphere-status').textContent = motionPreference.matches ? '系统减少动态效果：微光漂动、流星、薄云、萤火虫与呼吸光已停止' : !effects ? '已停止：微光漂动、流星、薄云、萤火虫、叶片摆动、相框呼吸光' : atmospherePreference.night ? '柔和弯月 · 树畔微光 · 偶遇流星 · 萤火虫慢漂 · 相框轻呼吸' : '薄云慢漂 · 少量花瓣 · 柔和日光';
-  $('effects-toggle').title = motionPreference.matches ? '系统已启用减少动态效果' : '控制树畔微光、流星、薄云、花瓣、萤火虫、微风和呼吸光';
+  $('atmosphere-status').textContent = motionPreference.matches ? '系统减少动态效果：流星、薄云、萤火虫与呼吸光已停止' : !effects ? '已停止：流星、薄云、萤火虫、叶片摆动、相框呼吸光' : atmospherePreference.night ? '柔和弯月 · 偶遇流星 · 萤火虫慢漂 · 相框轻呼吸' : '薄云慢漂 · 少量花瓣 · 柔和日光';
+  $('effects-toggle').title = motionPreference.matches ? '系统已启用减少动态效果' : '控制流星、薄云、花瓣、萤火虫、微风和呼吸光';
   scene?.setAtmosphere(atmospherePreference.night, effects);
   if (save) try { localStorage.setItem('love-tree:atmosphere:v1', JSON.stringify(atmospherePreference)); } catch { /* Keep the current session setting. */ }
 }
