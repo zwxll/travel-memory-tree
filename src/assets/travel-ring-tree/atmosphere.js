@@ -119,7 +119,7 @@ export class TreeAtmosphere {
       this.sky.material.uniforms.motionEnabled.value = active ? 1 : 0;
       const lowSkyDetail = this.lowDensity || this.owner.width <= 760;
       this.sky.material.uniforms.starDensity.value = lowSkyDetail ? .48 : 1;
-      this.sky.material.uniforms.milkyWayStrength.value = lowSkyDetail ? 0 : .003;
+      this.sky.material.uniforms.milkyWayStrength.value = lowSkyDetail ? 0 : .018;
     }
     this.owner.scene.background.lerpColors(this.colors.dayFog, this.colors.nightFog, n);
     this.owner.scene.fog.color.copy(this.owner.scene.background);

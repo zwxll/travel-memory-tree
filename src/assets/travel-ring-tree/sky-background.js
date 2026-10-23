@@ -10,7 +10,7 @@ export function memorySkyMaterial() {
       moonColor: { value: new THREE.Color('#ffedce') },
       nightTopColor: { value: new THREE.Color('#182438') }, nightMidColor: { value: new THREE.Color('#344259') },
       nightHorizonColor: { value: new THREE.Color('#495166') },
-      starDensity: { value: 1 }, milkyWayStrength: { value: .003 },
+      starDensity: { value: 1 }, milkyWayStrength: { value: .018 },
       skyTime: { value: 0 }, nightMix: { value: 0 },
       motionEnabled: { value: 0 },
       skyResolution: { value: new THREE.Vector2(1, 1) },
@@ -64,8 +64,8 @@ export function memorySkyMaterial() {
         vec3 starDirection = vec3(cos(longitude) * radius, height, sin(longitude) * radius);
         float distanceToStar = length(direction - starDirection);
         float magnitude = skyHash(cell + 57.9);
-        float energy = .035 + pow(magnitude, 7.) * .48;
-        float size = .00022 + pow(magnitude, 4.) * .00048;
+        float energy = .07 + pow(magnitude, 5.) * .7;
+        float size = .00038 + pow(magnitude, 3.) * .0007;
         float width = max(size, footprint * .6);
         float core = exp(-distanceToStar * distanceToStar / (width * width));
         // Integrate subpixel stars rather than letting them blink on/off while dragging.
@@ -123,10 +123,10 @@ export function memorySkyMaterial() {
           night += distantStars(direction, footprint) * subjectQuiet * awayFromMoon * skyOnly;
           // Two noise scales suggest distant stardust, without a nebula or another sky pass.
           if (milkyWayStrength > 0.) {
-            float latitude = dot(direction, normalize(vec3(-.34, .84, .42))) - .12;
+            float latitude = dot(direction, normalize(vec3(-.34, .84, .42))) + .10;
             vec2 bandUV = vec2(atan(direction.z, direction.x) * 3., direction.y * 7.);
             float structure = skyNoise(bandUV) * .65 + skyNoise(bandUV * 2.1 + 17.) * .35;
-            float band = exp(-latitude * latitude / .018) * smoothstep(.25, .72, structure);
+            float band = exp(-latitude * latitude / .032) * smoothstep(.25, .72, structure);
             night += mix(vec3(.67, .72, .85), vec3(.85, .8, .74), structure)
               * band * milkyWayStrength * subjectQuiet * awayFromMoon * skyOnly;
           }
