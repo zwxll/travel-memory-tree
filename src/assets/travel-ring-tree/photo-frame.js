@@ -3,12 +3,13 @@ import * as THREE from 'three';
 export function frameKeepsakeMaterial() {
   const canvas = document.createElement('canvas'); canvas.width = canvas.height = 256;
   const c = canvas.getContext('2d');
-  c.fillStyle = '#e8b6bf';
-  c.beginPath(); c.moveTo(6, 18); c.lineTo(122, 18); c.lineTo(118, 32); c.lineTo(123, 48);
-  c.lineTo(118, 64); c.lineTo(123, 80); c.lineTo(118, 96); c.lineTo(122, 110);
-  c.lineTo(6, 110); c.lineTo(10, 94); c.lineTo(5, 78); c.lineTo(10, 62); c.lineTo(5, 46); c.lineTo(10, 30); c.closePath(); c.fill();
-  c.strokeStyle = '#f7dbe0'; c.lineWidth = 2;
-  for (let x = 20; x < 120; x += 20) { c.beginPath(); c.moveTo(x, 22); c.lineTo(x - 10, 106); c.stroke(); }
+  c.fillStyle = '#e7a7b7';
+  for (let i = 0; i < 6; i++) {
+    const angle = i * Math.PI / 3;
+    c.beginPath(); c.ellipse(64 + Math.cos(angle) * 27, 64 + Math.sin(angle) * 27, 25, 17, angle, 0, Math.PI * 2); c.fill();
+  }
+  c.fillStyle = '#e2b972'; c.beginPath(); c.arc(64, 64, 16, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#fff0d2'; c.beginPath(); c.arc(60, 60, 4, 0, Math.PI * 2); c.fill();
   c.fillStyle = '#c77f94';
   c.beginPath(); c.moveTo(192, 99); c.bezierCurveTo(184, 91, 158, 73, 158, 51);
   c.bezierCurveTo(158, 29, 183, 26, 192, 46); c.bezierCurveTo(201, 26, 226, 29, 226, 51);
@@ -58,8 +59,8 @@ export function frameKeepsakes(photo, scale, material) {
       indices.push(start, start + 1, start + 2, start, start + 2, start + 3);
     }
   };
-  quad(-photo.w / 2 + .09 * scale, photo.h / 2 + .055 * scale, .28, .04, -.10, 0, .5, .5, 1);
-  quad(photo.w / 2 - .09 * scale, photo.h / 2 + .055 * scale, .28, .04, .10, 0, .5, .5, 1);
+  quad(-photo.w / 2 + .09 * scale, photo.h / 2 + .05 * scale, .10, .10, 0, 0, .5, .5, 1);
+  quad(photo.w / 2 - .09 * scale, photo.h / 2 + .05 * scale, .13, .09, 0, .5, .5, 1, 1);
   quad(0, -photo.h / 2 - .105 * scale, .16, .12, 0, .5, .5, 1, 1);
   quad(-photo.w / 2 + .22 * scale, -photo.h / 2 - .09 * scale, .48, .16, 0, 0, 0, .5, .5);
   quad(photo.w / 2 - .21 * scale, -photo.h / 2 - .10 * scale, .45, .13, 0, .5, 0, 1, .5);
