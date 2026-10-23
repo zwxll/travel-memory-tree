@@ -143,6 +143,7 @@ export class TreeAtmosphere {
       this.sky.material.uniforms.horizonColor.value.lerpColors(this.colors.dayHorizon, this.colors.nightHorizon, n);
       this.sky.material.uniforms.skyTime.value = t;
       this.sky.material.uniforms.nightMix.value = n;
+      this.sky.material.uniforms.motionEnabled.value = active ? 1 : 0;
       this.updateBackground();
     }
     this.owner.scene.background.lerpColors(this.colors.dayFog, this.colors.nightFog, n);

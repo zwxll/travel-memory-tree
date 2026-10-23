@@ -9,6 +9,7 @@ export function memorySkyMaterial() {
       cloudColor: { value: new THREE.Color('#fffdf8') }, sunColor: { value: new THREE.Color('#ffe2a7') },
       moonColor: { value: new THREE.Color('#ffedce') },
       skyTime: { value: 0 }, nightMix: { value: 0 },
+      motionEnabled: { value: 0 },
       glimmerMap: { value: null }, glimmerReady: { value: 0 }, skyResolution: { value: new THREE.Vector2(1, 1) },
       glimmerScale: { value: new THREE.Vector2(1, 1) },
       sunDirection: { value: new THREE.Vector3(0, 0, -1) }, moonDirection: { value: new THREE.Vector3(0, .2, -1).normalize() },
@@ -23,6 +24,7 @@ export function memorySkyMaterial() {
       uniform vec3 topColor, horizonColor, cloudColor, sunColor, moonColor;
       uniform vec3 sunDirection, moonDirection, moonRight, moonUp;
       uniform float skyTime, nightMix;
+      uniform float motionEnabled;
       uniform sampler2D glimmerMap;
       uniform float glimmerReady;
       uniform vec2 skyResolution;
@@ -45,6 +47,23 @@ export function memorySkyMaterial() {
           p = p * 2.03 + vec2(17.4, 9.2); weight *= .5;
         }
         return cloud;
+      }
+      float shootingStar(vec2 pixel, float time) {
+        float cycle = floor(time / 8.);
+        float progress = clamp((mod(time, 8.) - .8) / 1.6, 0., 1.);
+        float fade = smoothstep(0., .15, progress) * (1. - smoothstep(.82, 1., progress));
+        if (fade <= 0.) return 0.;
+        vec2 start = vec2((.35 + .26 * skyHash(vec2(cycle, 13.))) * skyResolution.x / skyResolution.y,
+          .9 + .04 * skyHash(vec2(cycle, 27.)));
+        vec2 direction = normalize(vec2(.85, -.52));
+        vec2 delta = pixel - start - direction * progress * .34;
+        float along = dot(delta, direction), across = dot(delta, vec2(-direction.y, direction.x));
+        float width = 1.1 / skyResolution.y;
+        float trail = exp(-across * across / (width * width)) * smoothstep(-.14, 0., along)
+          * (1. - smoothstep(-.001, .002, along));
+        float head = exp(-dot(delta, delta) / (width * width * 2.));
+        float halo = exp(-dot(delta, delta) / (width * width * 30.)) * .14;
+        return (trail * .9 + head * 1.5 + halo) * fade;
       }
       void main() {
         vec3 direction = normalize(vSkyDirection);
@@ -70,6 +89,9 @@ export function memorySkyMaterial() {
         float moonGlow = exp(-dot(moonUV, moonUV) * .26) * .085 * nightMix;
         color = mix(color, moonColor, moonGlow);
         color = mix(color, moonColor, disc * cutout * nightMix * .94);
+        if (nightMix > .005 && motionEnabled > .5) {
+          color += vec3(.86, .91, 1.) * shootingStar(gl_FragCoord.xy / skyResolution.y, skyTime) * nightMix;
+        }
         gl_FragColor = vec4(color, 1.);
         #include <colorspace_fragment>
       }`,

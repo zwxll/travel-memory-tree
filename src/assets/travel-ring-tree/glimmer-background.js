@@ -6,14 +6,14 @@ export class GlimmerBackground {
   constructor() {
     this.canvas = document.createElement('canvas');
     this.effect = createGlimmerVale(this.canvas, {
-      speed: 20, scale: 85, density: 45, sparkle: 30,
+      speed: 30, scale: 85, density: 45, sparkle: 65,
       background: '#111926', skyTop: '#18253b', skyHorizon: '#3f465c',
       advanced: {
         skyMid: '#2b3750', hillShadow: '#202638', slopeColor: '#777ba5', slopeDeep: '#444b70',
         crestColor: '#e6dff5', glowColor: '#f0def0', glowStrength: 35,
         hotspotStrength: 35, horizonGlowStrength: 16, flowerCore: '#e5a089',
         midCount: 2, bokehCount: 3, grassCount: 0, glintCount: 4,
-        fringe: 25, hover: 0, bob: 0,
+        fringe: 25, hover: 0, bob: 0, twinkleSharp: 3,
       },
     });
     this.texture = new THREE.CanvasTexture(this.canvas);
