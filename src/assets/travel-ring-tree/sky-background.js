@@ -10,7 +10,7 @@ export function memorySkyMaterial() {
       moonColor: { value: new THREE.Color('#ffedce') },
       nightTopColor: { value: new THREE.Color('#182438') }, nightMidColor: { value: new THREE.Color('#344259') },
       nightHorizonColor: { value: new THREE.Color('#495166') },
-      starDensity: { value: 1 }, milkyWayStrength: { value: .105 },
+      starDensity: { value: 1 }, milkyWayStrength: { value: .085 },
       skyTime: { value: 0 }, nightMix: { value: 0 },
       motionEnabled: { value: 0 },
       skyResolution: { value: new THREE.Vector2(1, 1) },
@@ -58,6 +58,12 @@ export function memorySkyMaterial() {
         vec2 cell = floor(uv * grid);
         if (skyHash(cell + 13.1) > .048 * starDensity) return vec3(0.);
         vec2 jitter = .15 + .7 * vec2(skyHash(cell + 37.7), skyHash(cell + 91.3));
+        // Move only stars inside the band, using the existing star evaluation.
+        float galacticLatitude = dot(direction, normalize(vec3(-.24, .94, .25))) + .05;
+        if (abs(galacticLatitude) < .15 && milkyWayStrength > 0.) {
+          float phase = skyHash(cell + 8.2) * 6.2831853;
+          jitter += .025 * vec2(sin(skyTime * .009 + phase), cos(skyTime * .006 + phase));
+        }
         vec2 location = (cell + jitter) / grid;
         float longitude = (location.x - .5) * 6.2831853, height = location.y * 2. - 1.;
         float radius = sqrt(max(0., 1. - height * height));
@@ -78,30 +84,33 @@ export function memorySkyMaterial() {
         vec3 tint = mix(vec3(1., .96, .88), vec3(.9, .95, 1.), skyHash(cell + 104.2));
         return tint * energy * coverage * core * twinkle;
       }
+      float galaxyHash(vec2 p) {
+        p = fract(p * vec2(.1031, .11369));
+        p += dot(p, p.yx + 19.19);
+        return fract(p.x * p.y * 31.7);
+      }
+      float galaxyNoise(vec2 p) {
+        vec2 i = floor(p), f = fract(p);
+        f = f * f * (3. - 2. * f);
+        return mix(mix(galaxyHash(i), galaxyHash(i + vec2(1., 0.)), f.x),
+          mix(galaxyHash(i + vec2(0., 1.)), galaxyHash(i + 1.), f.x), f.y);
+      }
       // Independent slow orbital phases, inspired by canvas-galaxy (no code copied).
       vec3 galaxyLight(vec3 d, float footprint) {
         float latitude = dot(d, normalize(vec3(-.24, .94, .25))) + .05;
+        if (abs(latitude) > .34) return vec3(0.);
         vec2 uv = vec2(atan(d.z, d.x) * 3., latitude * 9.);
         vec2 drift = vec2(skyTime * .0008, skyTime * .0002);
-        float clouds = cloudField(uv * 2. + drift);
-        float detail = skyNoise(uv * 11. + drift);
-        float bend = (skyNoise(uv * .65) - .5) * .075;
+        float clouds = galaxyNoise(uv * 2. + drift) * .65 + galaxyNoise(uv * 4. + drift) * .35;
+        float detail = galaxyNoise(uv * 11. + drift);
+        float bend = (galaxyNoise(uv * .65) - .5) * .075;
         float band = exp(-pow((latitude + bend) / .12, 2.));
-        float dust = smoothstep(.37, .66, cloudField(uv * 3.1 + 11.));
+        float dust = smoothstep(.37, .66, galaxyNoise(uv * 3.1 + 11.));
         float structure = (.18 + clouds * .95 + detail * .12) * (1. - dust * .75);
         vec3 mist = mix(vec3(.17, .25, .48), vec3(.39, .28, .47), clouds);
-        float dustStars = smoothstep(.82, .96, skyNoise(uv * 180.));
-        // Two sparse angular layers drift at different speeds, never around the tree.
-        float angle = skyTime * .00012;
-        vec3 orbit = vec3(cos(angle) * d.x - sin(angle) * d.z, d.y,
-          sin(angle) * d.x + cos(angle) * d.z);
-        vec3 movingStars = distantStars(orbit, footprint) * .35;
-        angle *= .57;
-        orbit = vec3(cos(angle) * d.x + sin(angle) * d.z, d.y,
-          -sin(angle) * d.x + cos(angle) * d.z);
-        movingStars += distantStars(normalize(orbit + vec3(.02, .04, .01)), footprint) * .22 * starDensity;
+        float dustStars = smoothstep(.82, .96, galaxyNoise(uv * 180.));
         return (mist * structure + vec3(.64, .67, .78) * dustStars * .12)
-          * band * milkyWayStrength + movingStars * band;
+          * band * milkyWayStrength;
       }
       float shootingStar(vec2 pixel, float time) {
         float cycle = floor(time / 8.);
@@ -123,6 +132,7 @@ export function memorySkyMaterial() {
       void main() {
         vec3 direction = normalize(vSkyDirection);
         vec3 color = mix(horizonColor, topColor, smoothstep(-.4, .55, direction.y));
+        if (nightMix < 1.) {
         float sunDistance = length(direction - sunDirection);
         float sunlight = exp(-sunDistance * sunDistance / .055) * .38 * (1. - nightMix);
         color = mix(color, sunColor, sunlight);
@@ -133,6 +143,7 @@ export function memorySkyMaterial() {
         clouds *= smoothstep(-.38, -.08, direction.y) * .62 * (1. - nightMix * .92);
         color = mix(color, mix(cloudColor, horizonColor, nightMix), clouds);
 
+        }
         // Only the lit crescent is painted, so its cutout keeps the sky behind it.
         if (nightMix > 0.) {
           // The floating garden is viewed slightly from above; its haze extends below y=0.
@@ -163,7 +174,8 @@ export function memorySkyMaterial() {
         vec3 normal = vec3(moonUV, sqrt(max(0., 1. - moonRadius2)));
         float illumination = dot(normal, normalize(vec3(.91, .12, -.4)));
         float crescent = smoothstep(-aa, aa, illumination) * disc;
-        float surface = .79 + .13 * skyNoise(moonUV * 14.) + .08 * skyNoise(moonUV * 37.);
+        float surface = 1.;
+        if (moonRadius2 < 1.05) surface = .79 + .13 * skyNoise(moonUV * 14.) + .08 * skyNoise(moonUV * 37.);
         float moonGlow = (exp(-moonRadius2 * .32) * .028
           + exp(-moonRadius2 * .015) * .006) * nightMix;
         color = mix(color, moonColor, moonGlow);
@@ -178,4 +190,46 @@ export function memorySkyMaterial() {
         gl_FragColor.rgb += (skyHash(gl_FragCoord.xy) - .5) / 255. * nightMix;
       }`,
   });
+}
+
+// Only the soft galaxy is cached. Stars, moon and meteors stay at full resolution.
+export class NightGalaxyCache {
+  constructor(sky) {
+    this.sky = sky; this.source = sky.material.fragmentShader;
+    this.target = new THREE.WebGLRenderTarget(1, 1, { depthBuffer: false, stencilBuffer: false });
+    this.material = sky.material.clone();
+    this.material.fragmentShader = this.source.slice(0, this.source.indexOf('      void main()')) + `void main() {
+      vec3 direction = normalize(vSkyDirection);
+      float footprint = max(length(dFdx(direction)), length(dFdy(direction)));
+      gl_FragColor = vec4(galaxyLight(direction, footprint), 1.);
+    }`;
+    this.mesh = new THREE.Mesh(sky.geometry, this.material); this.mesh.frustumCulled = false;
+    this.scene = new THREE.Scene(); this.scene.add(this.mesh);
+    sky.material.uniforms.galaxyMap = { value: this.target.texture };
+    sky.material.fragmentShader = 'uniform sampler2D galaxyMap;\n' + this.source.replace(
+      'galaxyLight(direction, footprint) * subjectQuiet',
+      'texture2D(galaxyMap, gl_FragCoord.xy / skyResolution).rgb * subjectQuiet');
+    sky.material.needsUpdate = true;
+    this.time = -1; this.view = new THREE.Matrix4(); this.projection = new THREE.Matrix4();
+  }
+  update(renderer, camera, low) {
+    const u = this.sky.material.uniforms; if (u.nightMix.value <= 0.) return;
+    const size = u.skyResolution.value, scale = Math.min(1, (low ? 256 : 480) / Math.max(size.x, size.y));
+    const w = Math.max(2, Math.round(size.x * scale)), h = Math.max(2, Math.round(size.y * scale));
+    const resized = w !== this.target.width || h !== this.target.height;
+    if (!resized && this.time >= 0 && Math.abs(u.skyTime.value - this.time) < 1 / 12 && this.strength === u.milkyWayStrength.value &&
+      this.view.equals(camera.matrixWorld) && this.projection.equals(camera.projectionMatrix)) return;
+    if (resized) this.target.setSize(w, h);
+    this.material.uniforms.skyTime.value = u.skyTime.value;
+    this.material.uniforms.milkyWayStrength.value = u.milkyWayStrength.value;
+    this.mesh.position.copy(camera.position);
+    const previous = renderer.getRenderTarget(); renderer.setRenderTarget(this.target);
+    renderer.render(this.scene, camera); renderer.setRenderTarget(previous);
+    this.strength = u.milkyWayStrength.value;
+    this.time = u.skyTime.value; this.view.copy(camera.matrixWorld); this.projection.copy(camera.projectionMatrix);
+  }
+  dispose() {
+    this.sky.material.fragmentShader = this.source; this.sky.material.needsUpdate = true;
+    this.target.dispose(); this.material.dispose();
+  }
 }

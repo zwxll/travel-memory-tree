@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { NightGalaxyCache } from './sky-background.js';
 import { CanopyScene } from '../umbrella-canopy/js/scene.js';
 import { buildTreeGarden } from './garden.js';
 import { buildMemoryTree, canopyHeight, treeHeightScale } from './tree-model.js';
@@ -14,6 +15,8 @@ const carouselPhotoScale = 1.15;
 
 // Camera controls, flights, texture uploads and lifecycle are read-only reuse.
 export class TravelRingTreeScene extends CanopyScene {
+  releaseContext() { this.nightGalaxy?.dispose(); this.nightGalaxy = null; super.releaseContext(); }
+
   buildRoom() {
     this.scene.background = new THREE.Color('#faf3ef');
     this.scene.fog.color.set('#faf3ef'); this.scene.fog.density = .003;
@@ -27,6 +30,10 @@ export class TravelRingTreeScene extends CanopyScene {
         object.frustumCulled = false;
         object.onBeforeRender = (renderer, _scene, camera) => {
           renderer.getDrawingBufferSize(uniforms.skyResolution.value);
+          if (uniforms.nightMix.value > 0.) {
+            this.nightGalaxy ||= new NightGalaxyCache(object);
+            this.nightGalaxy.update(renderer, camera, this.width <= 760 || this.atmosphere?.lowDensity);
+          }
           object.position.copy(camera.position); object.updateMatrixWorld(true);
           uniforms.sunDirection.value.copy(this.controls.target).sub(camera.position).normalize();
           uniforms.moonDirection.value.set(.7, .5, .5).unproject(camera).sub(camera.position).normalize();
