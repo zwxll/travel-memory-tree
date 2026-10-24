@@ -59,7 +59,7 @@ export function memorySkyMaterial() {
         vec2 grid = vec2(768., 384.);
         vec2 uv = vec2(atan(direction.z, direction.x) / 6.2831853 + .5, direction.y * .5 + .5);
         vec2 cell = floor(uv * grid);
-        if (skyHash(cell + 13.1) > .16 * starDensity) return vec3(0.);
+        if (skyHash(cell + 13.1) > .24 * starDensity) return vec3(0.);
         vec2 jitter = .15 + .7 * vec2(skyHash(cell + 37.7), skyHash(cell + 91.3));
         // Move only stars inside the band, using the existing star evaluation.
         float galacticLatitude = dot(direction, normalize(vec3(.23, .95, .15))) + .25;
@@ -129,8 +129,8 @@ export function memorySkyMaterial() {
         return light * milkyWayStrength;
       }
       float shootingStar(vec2 pixel, float time) {
-        float cycle = floor(time / 11.);
-        float progress = clamp((mod(time, 11.) - .8) / 1.6, 0., 1.);
+        float cycle = floor(time / 6.);
+        float progress = clamp((mod(time, 6.) - .8) / 2.2, 0., 1.);
         float fade = smoothstep(0., .15, progress) * (1. - smoothstep(.82, 1., progress));
         if (fade <= 0.) return 0.;
         float side = mod(cycle, 2.) < 1. ? 1. : -1.;
@@ -138,10 +138,11 @@ export function memorySkyMaterial() {
         vec2 start = vec2((side > 0. ? origin : 1. - origin) * skyResolution.x / skyResolution.y,
           .9 + .04 * skyHash(vec2(cycle, 27.)));
         vec2 direction = normalize(vec2(side * .85, -.42 - .22 * skyHash(vec2(cycle, 6.))));
-        vec2 delta = pixel - start - direction * progress * (.28 + .12 * skyHash(vec2(cycle, 31.)));
+        float distance = min(.56 + .14 * skyHash(vec2(cycle, 31.)), skyResolution.x / skyResolution.y * .75);
+        vec2 delta = pixel - start - direction * progress * distance;
         float along = dot(delta, direction), across = dot(delta, vec2(-direction.y, direction.x));
         float width = .85 / skyResolution.y;
-        float trail = exp(-across * across / (width * width)) * pow(smoothstep(-.16, 0., along), 1.8)
+        float trail = exp(-across * across / (width * width)) * pow(smoothstep(-.22, 0., along), 1.8)
           * (1. - smoothstep(-.001, .002, along));
         float head = exp(-dot(delta, delta) / (width * width * 2.));
         float halo = exp(-dot(delta, delta) / (width * width * 30.)) * .14;
