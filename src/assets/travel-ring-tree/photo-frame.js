@@ -43,7 +43,7 @@ export function frameKeepsakeMaterial() {
     c.bezierCurveTo(34, 4, 8, 22, 0, 30); c.fill(); c.restore();
   }
   const map = new THREE.CanvasTexture(canvas); map.colorSpace = THREE.SRGBColorSpace;
-  return new THREE.MeshBasicMaterial({ map, transparent: true, alphaTest: .15, side: THREE.DoubleSide, toneMapped: false, fog: false });
+  return new THREE.MeshBasicMaterial({ map, transparent: true, alphaTest: .15, side: THREE.DoubleSide, forceSinglePass: true, toneMapped: false, fog: false });
 }
 
 export function frameKeepsakes(photo, scale, material) {

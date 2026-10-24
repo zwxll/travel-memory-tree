@@ -47,9 +47,11 @@ const root = path.resolve(__dirname, '..');
       material.fragmentShader = source.replace('color = mix(color, moonColor, moonGlow);', ''); material.needsUpdate = true;
       const noHalo = render(4, 0);
       material.fragmentShader = source; material.needsUpdate = true;
+      const moon = u.moonDirection.value.clone().add(s.camera.position).project(s.camera);
+      const moonX = (moon.x + 1) * w / 2, moonY = (moon.y + 1) * h / 2;
       let haloInner = 0, haloOuter = 0, innerCount = 0, outerCount = 0;
       for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-        const distance = Math.hypot((x - w * .85) / h, (y - h * .75) / h);
+        const distance = Math.hypot((x - moonX) / h, (y - moonY) / h);
         const i = (y * w + x) * 4, glow = plain[i] - noHalo[i];
         if (distance > .05 && distance < .07) { haloInner += glow; innerCount++; }
         if (distance > .12 && distance < .14) { haloOuter += glow; outerCount++; }
@@ -100,7 +102,7 @@ const root = path.resolve(__dirname, '..');
       const hidden = s.scene.children.filter(o => o !== a.sky && o.visible); hidden.forEach(o => { o.visible = false; });
       const u = a.sky.material.uniforms, shader = a.sky.material.fragmentShader;
       // Isolate the lunar disc so unrelated stars cannot influence the centroid.
-      a.sky.material.fragmentShader = shader.replace('vec3 lunarColor = moonColor * surface * (.68 + .32 * sqrt(max(0., illumination)));', 'vec3 lunarColor = vec3(1.);')
+      a.sky.material.fragmentShader = shader.replace('vec3 lunarColor = moonColor * surface * (.52 + .48 * sqrt(max(0., illumination)));', 'vec3 lunarColor = vec3(1.);')
         .replace('color = mix(color, lunarColor, crescent * nightMix);', 'color = vec3(crescent);');
       a.sky.material.needsUpdate = true; u.motionEnabled.value = 0;
       const measure = () => {
@@ -114,17 +116,21 @@ const root = path.resolve(__dirname, '..');
         return { x: x / count, y: y / count, count };
       };
       const original = { pos: s.camera.position.clone(), quaternion: s.camera.quaternion.clone(), fov: s.camera.fov };
-      const before = measure(); s.camera.position.multiplyScalar(1.7); s.camera.rotateY(.28);
-      s.camera.fov = 68; s.camera.updateProjectionMatrix(); s.camera.updateMatrixWorld(); const after = measure();
-      s.camera.position.copy(original.pos); s.camera.quaternion.copy(original.quaternion); s.camera.fov = original.fov;
+      const before = measure(); s.camera.position.multiplyScalar(1.7);
+      s.camera.updateMatrixWorld(); const zoomed = measure();
+      s.camera.rotateY(-.1); s.camera.updateMatrixWorld(); const rotated = measure();
+      s.camera.rotateY(Math.PI); s.camera.updateMatrixWorld(); const behind = measure();
+      s.camera.position.copy(original.pos); s.camera.quaternion.copy(original.quaternion);
       s.camera.updateProjectionMatrix(); s.camera.updateMatrixWorld();
       a.sky.material.fragmentShader = shader; a.sky.material.needsUpdate = true;
       hidden.forEach(o => { o.visible = true; }); a.set(true, false);
-      return { before, after };
+      return { before, zoomed, rotated, behind };
     });
-    assert.ok(fixedMoon.before.count > 100 && fixedMoon.before.count === fixedMoon.after.count
-      && Math.abs(fixedMoon.before.x - fixedMoon.after.x) < .01 && Math.abs(fixedMoon.before.y - fixedMoon.after.y) < .01,
-    'moon position and size stay fixed through orbit, zoom and FOV changes: ' + JSON.stringify(fixedMoon));
+    assert.ok(fixedMoon.before.count > 100 && Math.abs(fixedMoon.before.count - fixedMoon.zoomed.count) <= 2
+      && Math.abs(fixedMoon.before.x - fixedMoon.zoomed.x) < .1 && Math.abs(fixedMoon.before.y - fixedMoon.zoomed.y) < .1,
+      'dolly zoom must not move or enlarge the distant moon: ' + JSON.stringify(fixedMoon));
+    assert.ok(fixedMoon.rotated.count > 100 && Math.abs(fixedMoon.rotated.x - fixedMoon.before.x) > 40 && fixedMoon.behind.count === 0,
+      'moon follows sky direction during orbit, with no duplicate on the opposite hemisphere: ' + JSON.stringify(fixedMoon));
     await page.locator('#effects-toggle').click();
     assert.equal(await page.evaluate(() => travelTree.scene.atmosphere.sky.material.uniforms.motionEnabled.value), 0);
     await page.locator('#effects-toggle').click();
@@ -148,6 +154,8 @@ const root = path.resolve(__dirname, '..');
       };
       const first = difference(render(1.4, true, true), render(1.4, false, true));
       const next = difference(render(1.9, true, true), render(1.9, false, true));
+      const reverseFirst = difference(render(12.4, true, true), render(12.4, false, true));
+      const reverseNext = difference(render(12.9, true, true), render(12.9, false, true));
       const quiet = difference(render(4, true, true), render(4, false, true));
       const day = difference(render(1.4, true, false), render(1.4, false, false));
       const plain = render(4, false, true); let backgroundPoints = 0;
@@ -155,11 +163,12 @@ const root = path.resolve(__dirname, '..');
         if (Math.max(plain[i], plain[i + 1], plain[i + 2]) > 140) backgroundPoints++;
       }
       hidden.forEach(o => { o.visible = true; }); a.mix = 1; a.set(true, true);
-      return { first, next, quiet, day, backgroundPoints };
+      return { first, next, reverseFirst, reverseNext, quiet, day, backgroundPoints };
     });
     const desktop = await checkMeteors();
     assert.ok(desktop.first.count > 30 && desktop.next.count > 30, 'a luminous meteor trail must render: ' + JSON.stringify(desktop));
     assert.ok(desktop.next.x > desktop.first.x + 25 && desktop.next.y < desktop.first.y - 15, 'meteor crosses the sky diagonally');
+    assert.ok(desktop.reverseFirst.count > 30 && desktop.reverseNext.count > 30 && desktop.reverseNext.x < desktop.reverseFirst.x - 25, 'later meteors vary their origin and direction');
     assert.equal(desktop.quiet.count, 0, 'meteors appear occasionally'); assert.equal(desktop.day.count, 0, 'daytime has no meteors');
     assert.ok(desktop.backgroundPoints < 5000, 'background star highlights remain sparse');
     await page.evaluate(() => { const s = travelTree.scene; s.atmosphere.effectTime = 1.6; s.atmosphere.update(0); s.renderer.render(s.scene, s.camera); });

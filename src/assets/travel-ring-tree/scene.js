@@ -27,7 +27,7 @@ export class TravelRingTreeScene extends CanopyScene {
       const uniforms = object.material?.uniforms;
       if (uniforms?.topColor) {
         // 背景始终围绕相机，手机远景不会露出天空球的裁切边缘。
-        object.frustumCulled = false;
+        object.frustumCulled = false; object.renderOrder = 1000;
         object.onBeforeRender = (renderer, _scene, camera) => {
           renderer.getDrawingBufferSize(uniforms.skyResolution.value);
           if (uniforms.nightMix.value > 0. && uniforms.milkyWayStrength.value > 0.) {
@@ -36,9 +36,6 @@ export class TravelRingTreeScene extends CanopyScene {
           }
           object.position.copy(camera.position); object.updateMatrixWorld(true);
           uniforms.sunDirection.value.copy(this.controls.target).sub(camera.position).normalize();
-          uniforms.moonDirection.value.set(.7, .5, .5).unproject(camera).sub(camera.position).normalize();
-          uniforms.moonRight.value.setFromMatrixColumn(camera.matrixWorld, 0);
-          uniforms.moonUp.value.setFromMatrixColumn(camera.matrixWorld, 1);
         };
       }
     });
@@ -89,6 +86,11 @@ export class TravelRingTreeScene extends CanopyScene {
       group.add(plate, picture, clip, frameKeepsakes(photo, this.heartScale, keepsakeMaterial)); group.position.copy(photo.rest); this.cardGroup.add(group);
       return { photo, group, mat, plate, clip, dim: 0, loaded: false, yaw: 0 };
     });
+    // Keep original clip meshes as raycast targets; render all identical clips once.
+    this.clipBatch = new THREE.InstancedMesh(clipGeometry, clipMaterial.clone(), photos.length);
+    this.clipBatch.name = 'photo-clip-batch'; this.clipBatch.frustumCulled = false;
+    this.clipBatch.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    clipMaterial.visible = false; this.scene.add(this.clipBatch);
     this.photoThreads = new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(photos.length * 12), 3)), new THREE.LineBasicMaterial({ color: '#a78b79', transparent: true, opacity: .24, depthWrite: false }));
     this.photoThreads.name = 'travel-photo-threads'; this.scene.add(this.photoThreads);
     this.threadCount = photos.length;
@@ -136,6 +138,8 @@ export class TravelRingTreeScene extends CanopyScene {
     this.envelopes = createHangingEnvelopes(this);
     this.atmosphere.attachTree();
     this._updatePhotoThreads();
+    this._updateClipBatch();
+
     this.resize();
     this.controls.maxDistance = this.wholeView().pos.distanceTo(this.wholeView().target);
   }
@@ -569,6 +573,21 @@ export class TravelRingTreeScene extends CanopyScene {
     if (this.clusterMode) this._updateCityOcclusion();
     this.envelopes?.update(this.atmosphere.effectTime, this.atmosphere.enabled && !this.reducedMotion, this.year, dt);
     this._updatePhotoThreads();
+    this._updateClipBatch();
+  }
+
+  _updateClipBatch() {
+    if (!this.clipBatch) return;
+    this.cardGroup.updateMatrixWorld(true);
+    for (let i = 0; i < this.cards.length; i++) {
+      const card = this.cards[i];
+      let visible = true;
+      for (let node = card.clip; node; node = node.parent) if (!node.visible) { visible = false; break; }
+      this._m.copy(card.clip.matrixWorld);
+      if (!visible) this._m.scale(this._s.set(0, 0, 0));
+      this.clipBatch.setMatrixAt(i, this._m);
+    }
+    this.clipBatch.instanceMatrix.needsUpdate = true;
   }
 
   _updatePhotoThreads() {

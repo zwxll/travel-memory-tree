@@ -2,6 +2,9 @@ import * as THREE from 'three';
 
 // All three details share the existing sky dome, without image downloads or another canvas.
 export function memorySkyMaterial() {
+  const moonDirection = new THREE.Vector3(.04, .085, -1).normalize();
+  const moonRight = new THREE.Vector3().crossVectors(moonDirection, new THREE.Vector3(0, 1, 0)).normalize();
+  const moonUp = new THREE.Vector3().crossVectors(moonRight, moonDirection).normalize();
   return new THREE.ShaderMaterial({
     side: THREE.BackSide, depthWrite: false,
     uniforms: {
@@ -14,8 +17,8 @@ export function memorySkyMaterial() {
       skyTime: { value: 0 }, nightMix: { value: 0 },
       motionEnabled: { value: 0 },
       skyResolution: { value: new THREE.Vector2(1, 1) },
-      sunDirection: { value: new THREE.Vector3(0, 0, -1) }, moonDirection: { value: new THREE.Vector3(0, .2, -1).normalize() },
-      moonRight: { value: new THREE.Vector3(1, 0, 0) }, moonUp: { value: new THREE.Vector3(0, 1, 0) },
+      sunDirection: { value: new THREE.Vector3(0, 0, -1) }, moonDirection: { value: moonDirection },
+      moonRight: { value: moonRight }, moonUp: { value: moonUp },
     },
     vertexShader: `varying vec3 vSkyDirection;
       void main() {
@@ -56,7 +59,7 @@ export function memorySkyMaterial() {
         vec2 grid = vec2(768., 384.);
         vec2 uv = vec2(atan(direction.z, direction.x) / 6.2831853 + .5, direction.y * .5 + .5);
         vec2 cell = floor(uv * grid);
-        if (skyHash(cell + 13.1) > .22 * starDensity) return vec3(0.);
+        if (skyHash(cell + 13.1) > .16 * starDensity) return vec3(0.);
         vec2 jitter = .15 + .7 * vec2(skyHash(cell + 37.7), skyHash(cell + 91.3));
         // Move only stars inside the band, using the existing star evaluation.
         float galacticLatitude = dot(direction, normalize(vec3(.23, .95, .15))) + .25;
@@ -70,7 +73,7 @@ export function memorySkyMaterial() {
         vec3 starDirection = vec3(cos(longitude) * radius, height, sin(longitude) * radius);
         float distanceToStar = length(direction - starDirection);
         float magnitude = skyHash(cell + 57.9);
-        float energy = .091 + pow(magnitude, 5.) * .65;
+        float energy = .085 + pow(magnitude, 6.) * .58;
         float size = .0003 + pow(magnitude, 3.) * .0007;
         float width = max(size, footprint * .6);
         // Compact antialiased point: no halo, blur or depth-of-field layer.
@@ -79,8 +82,8 @@ export function memorySkyMaterial() {
         float coverage = min(1., size * size / (width * width));
         float phase = skyHash(cell + 72.4) * 6.2831853;
         float speed = .24 + skyHash(cell + 25.8) * .32;
-        float twinkle = 1. + sin(skyTime * speed + phase) * .09
-          + sin(skyTime * speed * 1.73 + phase * 2.3) * .035;
+        float twinkle = 1. + sin(skyTime * speed + phase) * .06
+          + sin(skyTime * speed * 1.73 + phase * 2.3) * .025;
         vec3 tint = mix(vec3(1., .96, .88), vec3(.9, .95, 1.), skyHash(cell + 104.2));
         return tint * energy * coverage * core * twinkle;
       }
@@ -126,17 +129,19 @@ export function memorySkyMaterial() {
         return light * milkyWayStrength;
       }
       float shootingStar(vec2 pixel, float time) {
-        float cycle = floor(time / 8.);
-        float progress = clamp((mod(time, 8.) - .8) / 1.6, 0., 1.);
+        float cycle = floor(time / 11.);
+        float progress = clamp((mod(time, 11.) - .8) / 1.6, 0., 1.);
         float fade = smoothstep(0., .15, progress) * (1. - smoothstep(.82, 1., progress));
         if (fade <= 0.) return 0.;
-        vec2 start = vec2((.35 + .26 * skyHash(vec2(cycle, 13.))) * skyResolution.x / skyResolution.y,
+        float side = mod(cycle, 2.) < 1. ? 1. : -1.;
+        float origin = .18 + .18 * skyHash(vec2(cycle, 13.));
+        vec2 start = vec2((side > 0. ? origin : 1. - origin) * skyResolution.x / skyResolution.y,
           .9 + .04 * skyHash(vec2(cycle, 27.)));
-        vec2 direction = normalize(vec2(.85, -.52));
-        vec2 delta = pixel - start - direction * progress * .34;
+        vec2 direction = normalize(vec2(side * .85, -.42 - .22 * skyHash(vec2(cycle, 6.))));
+        vec2 delta = pixel - start - direction * progress * (.28 + .12 * skyHash(vec2(cycle, 31.)));
         float along = dot(delta, direction), across = dot(delta, vec2(-direction.y, direction.x));
-        float width = 1.1 / skyResolution.y;
-        float trail = exp(-across * across / (width * width)) * smoothstep(-.14, 0., along)
+        float width = .85 / skyResolution.y;
+        float trail = exp(-across * across / (width * width)) * pow(smoothstep(-.16, 0., along), 1.8)
           * (1. - smoothstep(-.001, .002, along));
         float head = exp(-dot(delta, delta) / (width * width * 2.));
         float halo = exp(-dot(delta, delta) / (width * width * 30.)) * .14;
@@ -166,8 +171,8 @@ export function memorySkyMaterial() {
           vec2 screen = gl_FragCoord.xy / skyResolution;
           float subjectQuiet = mix(.22, 1., smoothstep(.35, 1.15,
             length((screen - vec2(.5, .5)) / vec2(.29, .48))));
-          float moonDistance = length((gl_FragCoord.xy - skyResolution * vec2(.85, .75)) / skyResolution.y);
-          float awayFromMoon = smoothstep(.04, .16, moonDistance);
+          float moonDistance = length(direction - moonDirection);
+          float awayFromMoon = smoothstep(.025, .1, moonDistance);
           float skyOnly = smoothstep(-.22, .07, direction.y);
           float footprint = max(length(dFdx(direction)), length(dFdy(direction)));
           night += distantStars(direction, footprint) * subjectQuiet * awayFromMoon * skyOnly;
@@ -177,22 +182,28 @@ export function memorySkyMaterial() {
           }
           color = mix(color, night, nightMix);
         }
-        // Pixel-space lunar disc: fixed location and size across camera orbit/FOV/zoom.
-        float moonRadius = clamp(min(skyResolution.x, skyResolution.y) * .032, 12., 30.);
-        vec2 moonUV = (gl_FragCoord.xy - skyResolution * vec2(.85, .75)) / moonRadius;
+        // Angular disc in a fixed sky direction: camera translation has no parallax.
+        float facingMoon = dot(direction, moonDirection);
+        vec2 moonUV = vec2(dot(direction, moonRight), dot(direction, moonUp)) / .022;
         moonUV = mat2(.94, -.342, .342, .94) * moonUV;
         float moonRadius2 = dot(moonUV, moonUV);
-        float aa = 1.2 / moonRadius;
-        float disc = 1. - smoothstep(1. - aa, 1. + aa, length(moonUV));
+        float aa = max(length(dFdx(moonUV)), length(dFdy(moonUV)));
+        float disc = (1. - smoothstep(1. - aa, 1. + aa, length(moonUV))) * step(0., facingMoon);
         vec3 normal = vec3(moonUV, sqrt(max(0., 1. - moonRadius2)));
         float illumination = dot(normal, normalize(vec3(.91, .12, -.4)));
         float crescent = smoothstep(-aa, aa, illumination) * disc;
         float surface = 1.;
-        if (moonRadius2 < 1.05) surface = .79 + .13 * skyNoise(moonUV * 14.) + .08 * skyNoise(moonUV * 37.);
-        float moonGlow = (exp(-moonRadius2 * .32) * .028
-          + exp(-moonRadius2 * .015) * .006) * nightMix;
+        if (nightMix > 0. && disc > 0.) {
+          // Broad lunar maria and small relief, not uniform speckled noise.
+          float maria = smoothstep(.3, .7, skyNoise(moonUV * 3.2 + 7.) * .7 + skyNoise(moonUV * 6. + 19.) * .3);
+          surface = .94 - maria * .32 + (skyNoise(moonUV * 45.) - .5) * .07;
+          float crater = length((moonUV - vec2(.55, -.35)) / vec2(.13, .1));
+          surface += exp(-pow((crater - 1.) * 5., 2.)) * .1 - exp(-crater * crater * 3.) * .1;
+        }
+        float moonGlow = facingMoon > 0. ? (exp(-moonRadius2 * .5) * .018
+          + exp(-moonRadius2 * .035) * .0025) * nightMix : 0.;
         color = mix(color, moonColor, moonGlow);
-        vec3 lunarColor = moonColor * surface * (.68 + .32 * sqrt(max(0., illumination)));
+        vec3 lunarColor = moonColor * surface * (.52 + .48 * sqrt(max(0., illumination)));
         color = mix(color, lunarColor, crescent * nightMix);
         if (nightMix > .005 && motionEnabled > .5) {
           color += vec3(.86, .91, 1.) * shootingStar(gl_FragCoord.xy / skyResolution.y, skyTime) * nightMix;

@@ -44,19 +44,30 @@ const root = path.resolve(__dirname, '..');
     assert.equal(night.stars, false, 'stars share the existing sky shader, without a new Points object');
     assert.ok(await page.evaluate(() => travelTree.scene.atmosphere.sky.material.uniforms.starDensity.value > 0), 'static night keeps distant stars');
     const moonPixels = async () => {
+      const center = await page.evaluate(() => {
+        const s = travelTree.scene, u = s.atmosphere.sky.material.uniforms;
+        let point = u.moonDirection.value.clone().add(s.camera.position).project(s.camera);
+        // A world-fixed moon may be outside a narrow phone FOV; aim at it for this disc test.
+        if (Math.abs(point.x) > .8 || Math.abs(point.y) > .8) {
+          s.camera.lookAt(s.camera.position.clone().add(u.moonDirection.value)); s.camera.updateMatrixWorld();
+          point = u.moonDirection.value.clone().add(s.camera.position).project(s.camera);
+        }
+        s.renderer.render(s.scene, s.camera);
+        return {x:(point.x + 1) / 2, y:(1 - point.y) / 2};
+      });
       const png = await page.screenshot();
-      return page.evaluate(async source => {
+      return page.evaluate(async ({source, center}) => {
         const image = new Image(); image.src = source; await image.decode();
         const canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height;
         const c = canvas.getContext('2d'); c.drawImage(image, 0, 0);
-        const pixels = c.getImageData(Math.round(image.width * .85) - 30, Math.round(image.height * .25) - 30, 60, 60).data;
+        const pixels = c.getImageData(Math.round(image.width * center.x) - 30, Math.round(image.height * center.y) - 30, 60, 60).data;
         let light = 0, dark = 0;
         for (let i = 0; i < pixels.length; i += 4) {
           if (pixels[i] > 185 && pixels[i + 1] > 165 && pixels[i + 2] > 120) light++;
           if (pixels[i] < 120 && pixels[i + 1] < 120 && pixels[i + 2] < 140) dark++;
         }
         return { light, dark };
-      }, 'data:image/png;base64,' + png.toString('base64'));
+      }, {source:'data:image/png;base64,' + png.toString('base64'), center});
     };
     const desktopMoon = await moonPixels();
     assert.ok(desktopMoon.light > 40 && desktopMoon.dark > 400, 'a bright crescent with a dark cutout must render on desktop: ' + JSON.stringify(desktopMoon));
