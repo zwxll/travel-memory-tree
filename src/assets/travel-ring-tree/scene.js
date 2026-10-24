@@ -42,6 +42,18 @@ export class TravelRingTreeScene extends CanopyScene {
     this.common.uSway.value = 0;
     this.year = null;
     this._buildAtmosphere();
+    const controls = this.controls, updateControls = controls.update.bind(controls);
+    let automaticDelta = 0, skyYaw = 0;
+    controls.update = dt => {
+      // Track only OrbitControls' automatic contribution, including its damping tail.
+      // User drag/pan/zoom stays in the normal camera path.
+      if (controls.autoRotate && controls.state === -1) automaticDelta -= Math.PI * 2 / 60 * controls.autoRotateSpeed * (dt == null ? 1 / 60 : dt);
+      const damping = controls.enableDamping ? controls.dampingFactor : 1;
+      if (this.atmosphere.night || this.atmosphere.mix > 0) skyYaw += automaticDelta * damping;
+      automaticDelta *= 1 - damping;
+      this.atmosphere.sky.material.uniforms.nightSkyRotation.value.set(Math.cos(skyYaw), Math.sin(skyYaw));
+      return updateControls(dt);
+    };
   }
 
   setRouteInset(left) { this.routeInset = left; this._applyInset(1); this.redraw(); }

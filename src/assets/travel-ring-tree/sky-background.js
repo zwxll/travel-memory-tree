@@ -15,7 +15,7 @@ export function memorySkyMaterial() {
       nightHorizonColor: { value: new THREE.Color('#14223f') },
       starDensity: { value: 1 }, milkyWayStrength: { value: 0 },
       skyTime: { value: 0 }, nightMix: { value: 0 },
-      motionEnabled: { value: 0 },
+      motionEnabled: { value: 0 }, nightSkyRotation: { value: new THREE.Vector2(1, 0) },
       skyResolution: { value: new THREE.Vector2(1, 1) },
       sunDirection: { value: new THREE.Vector3(0, 0, -1) }, moonDirection: { value: moonDirection },
       moonRight: { value: moonRight }, moonUp: { value: moonUp },
@@ -32,7 +32,7 @@ export function memorySkyMaterial() {
       uniform vec3 sunDirection, moonDirection, moonRight, moonUp;
       uniform float skyTime, nightMix;
       uniform float motionEnabled;
-      uniform vec2 skyResolution;
+      uniform vec2 skyResolution, nightSkyRotation;
       varying vec3 vSkyDirection;
 
       float skyHash(vec2 p) {
@@ -163,6 +163,8 @@ export function memorySkyMaterial() {
 
         }
         // Only the lit crescent is painted, so its cutout keeps the sky behind it.
+        // Cancel only the automatic orbit; manual camera motion still sees a distant sky.
+        direction.xz = mat2(nightSkyRotation.x, nightSkyRotation.y, -nightSkyRotation.y, nightSkyRotation.x) * direction.xz;
         if (nightMix > 0.) {
           // The floating garden is viewed slightly from above; its haze extends below y=0.
           float elevation = direction.y;
